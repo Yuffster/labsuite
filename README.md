@@ -13,7 +13,6 @@ updates [here](http://github.com/Opentrons/opentrons_sdk).
 This current version has basic support for keeping track of liquids (and 
 mixtures of liquids) between liquid containers.
 
-
 ## Protocols
 
 Protocols are defined by importing the Protocol class, adding containers and
