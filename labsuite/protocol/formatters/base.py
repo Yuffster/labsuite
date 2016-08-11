@@ -8,7 +8,7 @@ class ProtocolFormatter():
 
     _protocol = None  # The protocol.
 
-    def __init__(self, protocol=None, **options):
+    def __init__(self, protocol=None):
         if protocol:
             self._protocol = protocol
         else:
