@@ -2,8 +2,7 @@ from setuptools import setup, find_packages
 
 config = {
     'description': "A suite of tools for portable automated scientific protocols.",
-    'author': "OpenTrons",
-    'author_email': 'info@opentrons.com',
+    'author': "Michelle Steigerwalt",
     'url': 'http://opentrons.com',
     'version': '0.4',
     'install_requires': ['pyyaml', 'pyserial'],
