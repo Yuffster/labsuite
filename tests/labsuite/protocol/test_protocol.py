@@ -18,6 +18,18 @@ class ProtocolTest(unittest.TestCase):
         slot = self.protocol._normalize_address('A1:A1')
         self.assertEqual(slot, ((0, 0), (0, 0)))
 
+    def test_info(self):
+        name = "Foo Bar"
+        desc = "Lorem ipsum dolor set amet."
+        auth = "Jane Doe"
+        self.protocol.set_info(name=name, description=desc, author=auth)
+        i = self.protocol.info
+        self.assertEqual(i['name'], name)
+        self.assertEqual(i['description'], desc)
+        self.assertEqual(i['author'], auth)
+        self.assertTrue('created' in i)
+        self.assertTrue('updated' in i)
+
     def test_transfer(self):
         """ Basic transfer. """
         self.protocol.add_container('A1', 'microplate.96')

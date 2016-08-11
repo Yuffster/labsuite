@@ -3,6 +3,7 @@ from labsuite.labware.grid import normalize_position
 import labsuite.drivers.motor as motor_drivers
 from labsuite.util.log import debug
 from labsuite.protocol.handlers import ContextHandler, MotorControlHandler
+import time
 
 import copy
 
@@ -26,6 +27,13 @@ class Protocol():
 
     _containers = None  # { slot: container_name }
 
+    # Metadata
+    _name = None
+    _description = None
+    _created = None
+    _updated = None
+    _author = None
+
     def __init__(self):
         self._ingredients = {}
         self._container_labels = {}
@@ -35,6 +43,37 @@ class Protocol():
         self._handlers = []
         self._initialize_context()
 
+    def set_info(self, name=None, description=None, created=None, updated=None, author=None):
+        """
+        Sets the information metatadata of the protocol.
+        """
+        if name is not None:
+            self._name = name
+        if description is not None:
+            self._description = description
+        if author is not None:
+            self._author = author
+        if created is not None:
+            self._created = created
+        if updated is not None:
+            self._updated = updated
+
+    @property
+    def info(self):
+        """
+        Returns information metatadata of the protocol (author, name,
+        description, etc).
+        """
+        o = {}
+        if self._name is not None:
+            o['name'] = self._name
+        if self._author is not None:
+            o['author'] = self._author
+        if self._description is not None:
+            o['description'] = self._description
+        o['created'] = self._created or str(time.strftime("%c"))
+        o['updated'] = self._updated or str(time.strftime("%c"))
+        return o
     def add_container(self, slot, name, label=None):
         slot = normalize_position(slot)
         self._context_handler.add_container(slot, name)
