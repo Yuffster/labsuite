@@ -330,6 +330,14 @@ class Protocol():
             method(**kwargs)
             h.after_each()
 
+    @property
+    def commands(self):
+        return copy.deepcopy(self._commands)
+
+    @property
+    def instruments(self):
+        return copy.deepcopy(self._instruments)
+
     def attach_handler(self, handler_class):
         """
         When you attach a handler, commands are run on the handler in sequence
