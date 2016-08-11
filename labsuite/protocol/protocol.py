@@ -360,6 +360,15 @@ class Protocol():
         self._handlers.append(handler)
         return handler
 
+    def export(self, Formatter, **kwargs):
+        """
+        Takes a ProtocolFormatter class (see protocol.formats), initializes
+        it with any relevant options kwargs, passes in the current protocol,
+        and outputs the data appropriate to the specific format.
+        """
+        f = Formatter(self, **kwargs)
+        return f.export()
+
     def attach_motor(self, port=None):
         self._motor_handler = self.attach_handler(MotorControlHandler)
         if port is not None:
