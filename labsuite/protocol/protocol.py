@@ -3,10 +3,10 @@ from labsuite.labware.grid import normalize_position, humanize_position
 import labsuite.drivers.motor as motor_drivers
 from labsuite.util.log import debug
 from labsuite.protocol.handlers import ContextHandler, MotorControlHandler
+
 import time
-
 import copy
-
+import logging
 
 class Protocol():
 
@@ -330,6 +330,19 @@ class Protocol():
             method(**kwargs)
             h.after_each()
 
+    def _virtual_run(self):
+        """
+        Runs protocol on a virtualized MotorHandler to ensure that there are
+        no run-specific problems.
+        """
+        logger = logging.getLogger()
+        logger.disabled = True
+        mh = self._motor_handler
+        self.attach_motor()  # Virtualized motor handler.
+        self.run_all()
+        self._motor_handler = mh  # Put everything back the way it was.
+        logger.disabled = False
+
     @property
     def commands(self):
         return copy.deepcopy(self._commands)
@@ -360,12 +373,18 @@ class Protocol():
         self._handlers.append(handler)
         return handler
 
-    def export(self, Formatter, **kwargs):
+    def export(self, Formatter, validate_run=False, **kwargs):
         """
         Takes a ProtocolFormatter class (see protocol.formats), initializes
         it with any relevant options kwargs, passes in the current protocol,
         and outputs the data appropriate to the specific format.
+
+        If validate_run is set to True, the protocol will be run on a
+        virtual robot to catch any runtime errors (ie, no tipracks or
+        trash assigned).
         """
+        if validate_run:
+            self._virtual_run()
         f = Formatter(self, **kwargs)
         return f.export()
 

@@ -88,3 +88,11 @@ class ProtocolFormatterTest(unittest.TestCase):
         }
         """).substitute(created=i['created'], updated=i['updated'])
         self.assertEqual(json.loads(expected), json.loads(result))
+
+    def testInvalidJSON(self):
+        self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_container('A1', 'microplate.96', label="Ingredients")
+        self.protocol.add_container('B1', 'microplate.96')
+        self.protocol.transfer('A1:A1', 'B1:B1', ul=10, tool='p10')
+        with self.assertRaises(KeyError):
+            self.protocol.export(JSONFormatter, validate_run=True)
