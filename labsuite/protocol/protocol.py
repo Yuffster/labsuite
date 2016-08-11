@@ -68,7 +68,9 @@ class Protocol():
 
     def add_command(self, command, **kwargs):
         self._run_in_context_handler(command, **kwargs)
-        self._commands.append({command: kwargs})
+        d = {'command': command}
+        d.update(**kwargs)
+        self._commands.append(d)
 
     def transfer(self, start, end, ul=None, ml=None,
                  blowout=True, touchtip=True, tool=None):
@@ -227,9 +229,6 @@ class Protocol():
         i = 0
         yield(0, len(self._commands))
         while i < len(self._commands):
-            cur = self._commands[i]
-            command = list(cur)[0]
-            args = cur[command]
             self._run(i)
             i += 1
             yield (i, len(self._commands))
@@ -274,9 +273,8 @@ class Protocol():
         method(**kwargs)
 
     def _run(self, index):
-        cur = self._commands[index]
-        command = list(cur)[0]
-        kwargs = cur[command]
+        kwargs = copy.deepcopy(self._commands[index])
+        command = kwargs.pop('command')
         self._run_in_context_handler(command, **kwargs)
         for h in self._handlers:
             debug(
