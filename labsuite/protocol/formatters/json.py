@@ -25,13 +25,17 @@ class JSONFormatter(ProtocolFormatter):
                 ('axis', axis),
                 ('type', name)
             ])
+        modules = OrderedDict()
+        for slot, name in sorted(self._protocol._containers.items()):
+            c = OrderedDict([('name', name)])
+            modules[humanize_position(slot)] = c
+            label = self._protocol.get_container_label(slot)
+            if label:
+                c['label'] = label
         instructions = []
         for command in self._protocol.commands:
             command = self._translate_command(command)
             instructions.append(command)
-        modules = OrderedDict()
-        for slot, name in sorted(self._protocol._containers.items()):
-            modules[humanize_position(slot)] = name
         out = OrderedDict()
         out['info'] = info
         out['instruments'] = instruments

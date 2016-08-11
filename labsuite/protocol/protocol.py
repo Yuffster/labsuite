@@ -260,8 +260,20 @@ class Protocol():
         return (container, well)
 
     def humanize_address(self, address):
-        start, end = map(humanize_position, address)
+        start, end = address
+        label = self.get_container_label(start)
+        if label is not None:
+            start = label
+        else:
+            start = humanize_position(start)
+        end = humanize_position(end)
         return "{}:{}".format(start, end)
+
+    def get_container_label(self, position):
+        for label, pos in self._container_labels.items():
+            if pos == position:
+                return label
+        return None
 
     def run(self):
         """

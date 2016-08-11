@@ -21,12 +21,12 @@ class ProtocolFormatterTest(unittest.TestCase):
         )
         self.protocol.add_instrument('A', 'p10')
         self.protocol.add_container('A1', 'microplate.96', label="Ingredients")
-        self.protocol.add_container('B1', 'microplate.96')
+        self.protocol.add_container('B1', 'microplate.96', label="Output")
         self.protocol.transfer('A1:A1', 'B1:B1', ul=10, tool='p10')
         self.protocol.transfer_group(
-            ('A3:A3', 'B3:B3', {'ul': 3}),
-            ('A4:A4', 'B4:B4'),
-            ('A1:A5', 'B5:C1'),
+            ('A1:A3', 'B1:B3', {'ul': 3}),
+            ('A1:A4', 'B1:B4'),
+            ('A1:A5', 'B1:C1'),
             tool='p10'
         )
         i = self.protocol.info
@@ -47,14 +47,20 @@ class ProtocolFormatterTest(unittest.TestCase):
                 }
             },
             "modules": {
-                "A1": "microplate.96",
-                "B1": "microplate.96"
+                "A1": {
+                    "name": "microplate.96",
+                    "label": "ingredients"
+                },
+                "B1": {
+                    "name": "microplate.96",
+                    "label": "output"
+                }
             },
             "instructions": [
                 {
                     "command": "transfer",
-                    "start": "A1:A1",
-                    "end": "B1:B1",
+                    "start": "ingredients:A1",
+                    "end": "output:B1",
                     "volume": 10,
                     "tool": "p10",
                     "blowout": true,
@@ -64,21 +70,21 @@ class ProtocolFormatterTest(unittest.TestCase):
                     "command": "transfer_group",
                     "transfers": [
                         {
-                            "start": "A3:A3",
-                            "end": "B3:B3",
+                            "start": "ingredients:A3",
+                            "end": "output:B3",
                             "volume": 3,
                             "blowout": true,
                             "touchtip": true
                         },
                         {
-                            "start": "A4:A4",
-                            "end": "B4:B4",
+                            "start": "ingredients:A4",
+                            "end": "output:B4",
                             "blowout": true,
                             "touchtip": true
                         },
                         {
-                            "start": "A1:A5",
-                            "end": "B5:C1",
+                            "start": "ingredients:A5",
+                            "end": "output:C1",
                             "blowout": true,
                             "touchtip": true
                         }
