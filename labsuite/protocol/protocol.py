@@ -1,5 +1,5 @@
 from labsuite.labware import containers, deck, pipettes
-from labsuite.labware.grid import normalize_position
+from labsuite.labware.grid import normalize_position, humanize_position
 import labsuite.drivers.motor as motor_drivers
 from labsuite.util.log import debug
 from labsuite.protocol.handlers import ContextHandler, MotorControlHandler
@@ -258,6 +258,10 @@ class Protocol():
                 raise KeyError("Container not found: {}".format(container))
 
         return (container, well)
+
+    def humanize_address(self, address):
+        start, end = map(humanize_position, address)
+        return "{}:{}".format(start, end)
 
     def run(self):
         """
