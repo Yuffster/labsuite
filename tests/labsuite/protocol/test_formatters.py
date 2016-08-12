@@ -47,7 +47,7 @@ class ProtocolFormatterTest(unittest.TestCase):
                     "type": "p10"
                 }
             },
-            "modules": {
+            "deck": {
                 "A1": {
                     "name": "microplate.96",
                     "label": "Ingredients"

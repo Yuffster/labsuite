@@ -39,7 +39,7 @@ class JSONFormatter(ProtocolFormatter):
         out = OrderedDict()
         out['info'] = info
         out['instruments'] = instruments
-        out['modules'] = modules
+        out['deck'] = modules
         out['instructions'] = instructions
         return json.dumps(out, indent=4)
 
