@@ -15,6 +15,7 @@ class Protocol():
     _instruments = None  # { motor_axis: instrument }
 
     _container_labels = None  # Aliases. { 'foo': (0,0), 'bar': (0,1) }
+    _label_case = None  # Capitalized labels.
 
     _commands = None  # []
 
@@ -37,6 +38,7 @@ class Protocol():
     def __init__(self):
         self._ingredients = {}
         self._container_labels = {}
+        self._label_case = {}
         self._instruments = {}
         self._containers = {}
         self._commands = []
@@ -79,8 +81,11 @@ class Protocol():
         self._context_handler.add_container(slot, name)
         self._containers[slot] = name
         if (label):
-            label = label.lower()
-            self._container_labels[label] = slot
+            lowlabel = label.lower()
+            # Maintain label capitalization, but only one form.
+            if lowlabel not in self._label_case:
+                self._label_case[lowlabel] = label
+            self._container_labels[lowlabel] = slot
 
     def add_instrument(self, axis, name):
         self._instruments[axis] = name
@@ -260,19 +265,34 @@ class Protocol():
         return (container, well)
 
     def humanize_address(self, address):
+        """
+        Returns a human-readable string for a particular address.
+
+        If ((0, 0), (1, 0)) is passed and no labels are attached to
+        A1, this will return 'A1:B1'.
+
+        For ('label', (1, 0)), it will return the valid label with
+        the first provided capitalization, for example "LaBeL:B1".
+        """
         start, end = address
-        label = self.get_container_label(start)
-        if label is not None:
-            start = label
-        else:
-            start = humanize_position(start)
+        try:
+            start = normalize_position(start)  # Try to convert 'A1'.
+            # Find a label for that tuple position.
+            label = self.get_container_label(start)
+            if label is not None:
+                start = label
+        except ValueError:
+            # If it's not a tuple position, it's a string label.
+            if start.lower() not in self._container_labels:
+                raise ValueError("Invalid continer: {}".format(start))
+            start = self._label_case.get(start.lower(), start)
         end = humanize_position(end)
         return "{}:{}".format(start, end)
 
     def get_container_label(self, position):
         for label, pos in self._container_labels.items():
             if pos == position:
-                return label
+                return self._label_case[label]
         return None
 
     def run(self):

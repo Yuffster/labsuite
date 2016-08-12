@@ -17,7 +17,8 @@ class ProtocolFormatterTest(unittest.TestCase):
         self.protocol.set_info(
             name="Test Protocol",
             description="A protocol to test JSON output.",
-            author="Michelle Steigerwalt"
+            author="Michelle Steigerwalt",
+            created="Thu Aug 11 20:19:55 2016"
         )
         self.protocol.add_instrument('A', 'p10')
         self.protocol.add_container('A1', 'microplate.96', label="Ingredients")
@@ -25,7 +26,7 @@ class ProtocolFormatterTest(unittest.TestCase):
         self.protocol.transfer('A1:A1', 'B1:B1', ul=10, tool='p10')
         self.protocol.transfer_group(
             ('A1:A3', 'B1:B3', {'ul': 3}),
-            ('A1:A4', 'B1:B4'),
+            ('INGREDIENTS:A4', 'B1:B4'),
             ('A1:A5', 'B1:C1'),
             tool='p10'
         )
@@ -37,7 +38,7 @@ class ProtocolFormatterTest(unittest.TestCase):
                 "name": "Test Protocol",
                 "author": "Michelle Steigerwalt",
                 "description": "A protocol to test JSON output.",
-                "created": "$created",
+                "created": "Thu Aug 11 20:19:55 2016",
                 "updated": "$updated"
             },
             "instruments": {
@@ -49,18 +50,18 @@ class ProtocolFormatterTest(unittest.TestCase):
             "modules": {
                 "A1": {
                     "name": "microplate.96",
-                    "label": "ingredients"
+                    "label": "Ingredients"
                 },
                 "B1": {
                     "name": "microplate.96",
-                    "label": "output"
+                    "label": "Output"
                 }
             },
             "instructions": [
                 {
                     "command": "transfer",
-                    "start": "ingredients:A1",
-                    "end": "output:B1",
+                    "start": "Ingredients:A1",
+                    "end": "Output:B1",
                     "volume": 10,
                     "tool": "p10",
                     "blowout": true,
@@ -70,21 +71,21 @@ class ProtocolFormatterTest(unittest.TestCase):
                     "command": "transfer_group",
                     "transfers": [
                         {
-                            "start": "ingredients:A3",
-                            "end": "output:B3",
+                            "start": "Ingredients:A3",
+                            "end": "Output:B3",
                             "volume": 3,
                             "blowout": true,
                             "touchtip": true
                         },
                         {
-                            "start": "ingredients:A4",
-                            "end": "output:B4",
+                            "start": "Ingredients:A4",
+                            "end": "Output:B4",
                             "blowout": true,
                             "touchtip": true
                         },
                         {
-                            "start": "ingredients:A5",
-                            "end": "output:C1",
+                            "start": "Ingredients:A5",
+                            "end": "Output:C1",
                             "blowout": true,
                             "touchtip": true
                         }
