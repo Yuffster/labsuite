@@ -76,16 +76,19 @@ class Protocol():
         o['created'] = self._created or str(time.strftime("%c"))
         o['updated'] = self._updated or str(time.strftime("%c"))
         return o
+
     def add_container(self, slot, name, label=None):
         slot = normalize_position(slot)
-        self._context_handler.add_container(slot, name)
-        self._containers[slot] = name
         if (label):
             lowlabel = label.lower()
+            if lowlabel in self._container_labels:
+                raise KeyError("Label already in use: {}".format(label))
             # Maintain label capitalization, but only one form.
             if lowlabel not in self._label_case:
                 self._label_case[lowlabel] = label
             self._container_labels[lowlabel] = slot
+        self._context_handler.add_container(slot, name)
+        self._containers[slot] = name
 
     def add_instrument(self, axis, name):
         self._instruments[axis] = name

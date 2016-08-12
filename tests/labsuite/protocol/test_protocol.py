@@ -30,6 +30,16 @@ class ProtocolTest(unittest.TestCase):
         self.assertTrue('created' in i)
         self.assertTrue('updated' in i)
 
+    def test_humanize_address(self):
+        self.protocol.add_container("A1", 'microplate.96', label="LaBeL")
+        with self.assertRaises(KeyError):
+            self.protocol.add_container("A2", 'microplate.96', label="label")
+        self.protocol.add_container("A2", 'microplate.96', label="stuff")
+        lA1 = self.protocol.humanize_address(('label', 'A1'))
+        sA1 = self.protocol.humanize_address(('STUFF', 'A1'))
+        self.assertEqual(lA1, 'LaBeL:A1')
+        self.assertEqual(sA1, 'stuff:A1')
+
     def test_transfer(self):
         """ Basic transfer. """
         self.protocol.add_container('A1', 'microplate.96')
