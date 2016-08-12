@@ -128,6 +128,7 @@ class Protocol():
         if tool is None:
             inst = self._context_handler.get_instrument(volume=volume)
             tool = inst.name
+
         self.add_command(
             'transfer',
             volume=volume,
@@ -243,11 +244,9 @@ class Protocol():
     def _normalize_address(self, address):
         """
         Takes an address like "A1:A1" or "Ingredients:A1" and returns a tuple
-        like (0, 0) or ('ingredients', 0).
+        like ((0, 0), (0, 0)).
 
-        Container labels are retained in the address tuples so that named
-        containers can be assigned to different slots within the user
-        interface.
+        To retain label names, use humanize_address.
         """
 
         if ':' not in address:
@@ -264,6 +263,7 @@ class Protocol():
             container = container.lower()
             if container not in self._container_labels:
                 raise KeyError("Container not found: {}".format(container))
+            container = self._container_labels[container]
 
         return (container, well)
 

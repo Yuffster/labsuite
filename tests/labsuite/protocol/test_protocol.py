@@ -14,7 +14,7 @@ class ProtocolTest(unittest.TestCase):
     def test_normalize_address(self):
         self.protocol.add_container('A1', 'microplate.96', label="Output")
         label = self.protocol._normalize_address('Output:A1')
-        self.assertEqual(label, ('output', (0, 0)))
+        self.assertEqual(label, ((0, 0), (0, 0)))
         slot = self.protocol._normalize_address('A1:A1')
         self.assertEqual(slot, ((0, 0), (0, 0)))
 
@@ -94,7 +94,7 @@ class ProtocolTest(unittest.TestCase):
                 },
                 {
                     'volume': 12,
-                    'start': ('label', (0, 4)),  # label:A5
+                    'start': ((0, 0), (0, 4)),  # label:A5
                     'end': ((1, 4), (2, 0)),  # B5:C1
                     'blowout': True,
                     'touchtip': True
