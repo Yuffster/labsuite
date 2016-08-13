@@ -84,6 +84,14 @@ class Protocol():
         return o
 
     @property
+    def commands(self):
+        return copy.deepcopy(self._commands)
+
+    @property
+    def instruments(self):
+        return copy.deepcopy(self._instruments)
+
+    @property
     def hash(self):
         return hashing.hash_data([
             self._ingredients,
@@ -421,14 +429,6 @@ class Protocol():
         self.run_all()
         self._motor_handler = mh  # Put everything back the way it was.
         logger.disabled = False
-
-    @property
-    def commands(self):
-        return copy.deepcopy(self._commands)
-
-    @property
-    def instruments(self):
-        return copy.deepcopy(self._instruments)
 
     def attach_handler(self, handler_class):
         """
