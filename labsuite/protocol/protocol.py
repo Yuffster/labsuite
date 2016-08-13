@@ -146,12 +146,6 @@ class Protocol():
         self._instruments[axis] = name
         self._context_handler.add_instrument(axis, name)
 
-    def add_ingredient(self, name, location):
-        pass
-
-    def allocate(self, **kwargs):
-        pass
-
     def calibrate(self, position, **kwargs):
         if ':' in position:
             pos = self._normalize_address(position)
