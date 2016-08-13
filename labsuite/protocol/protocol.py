@@ -92,17 +92,6 @@ class Protocol():
         return copy.deepcopy(self._instruments)
 
     @property
-    def hash(self):
-        return hashing.hash_data([
-            self._ingredients,
-            self._instruments,
-            self._container_labels,
-            self._label_case,
-            self._containers,
-            self._commands
-        ])
-
-    @property
     def version(self):
         return ".".join(map(str, self._version))
 
@@ -128,6 +117,20 @@ class Protocol():
         self._version = (major, feature, minor)
         self._version_hash = vhash
         return self.version
+
+    @property
+    def hash(self):
+        return hashing.hash_data([
+            self._ingredients,
+            self._instruments,
+            self._container_labels,
+            self._label_case,
+            self._containers,
+            self._commands
+        ])
+
+    def __eq__(self, protocol):
+        return self.hash == protocol.hash
 
     def add_container(self, slot, name, label=None):
         slot = normalize_position(slot)

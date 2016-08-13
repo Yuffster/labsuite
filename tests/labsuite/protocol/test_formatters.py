@@ -130,8 +130,8 @@ class ProtocolFormatterTest(unittest.TestCase):
         p = JSONLoader(self.json).protocol
         # Hashes of all protocol run-related data within the JSON and manually
         # defined protcol are equal.
-        self.assertEqual(self.protocol.hash, p.hash)
+        self.assertEqual(self.protocol, p)
         # Make a modification of the original protocol.
         p.add_instrument('B', 'p20')
         # Hashes are different.
-        self.assertNotEqual(self.protocol.hash, p.hash)
+        self.assertNotEqual(self.protocol, p)

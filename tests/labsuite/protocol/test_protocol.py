@@ -200,6 +200,37 @@ class ProtocolTest(unittest.TestCase):
         self.protocol.run_all()
         self.protocol.run_all()
 
+    def test_protocol_equality(self):
+        # Set up a protocol.
+        p1 = Protocol()
+        p1.add_instrument('A', 'p200')
+        p1.add_container('C1', 'tiprack.p200')
+        p1.add_container('A1', 'microplate.96')
+        p1.calibrate('A1', x=1, y=2, z=3)
+        p1.calibrate_instrument('A', top=0, blowout=10)
+        p1.transfer('A1:A1', 'A1:A2', ul=100)
+        p1.transfer('A1:A2', 'A1:A3', ul=80)
+
+        # And a copy.
+        p2 = Protocol()
+        p2.add_container('A1', 'microplate.96')
+        p2.add_container('C1', 'tiprack.p200')
+        p2.add_instrument('A', 'p200')
+        p2.calibrate('A1', x=1, y=2, z=3)
+        p2.calibrate_instrument('A', top=0, blowout=10)
+        p2.transfer('A1:A1', 'A1:A2', ul=100)
+        p2.transfer('A1:A2', 'A1:A3', ul=80)
+
+        # They're identical.
+        self.assertEqual(p1, p2)
+
+        # Make a change.
+        p2.add_instrument('B', 'p10')
+
+        # No longer identical.
+        self.assertNotEqual(p1, p2)
+
+
     def test_protocol_version(self):
         # Set up a protocol.
         self.protocol.add_instrument('A', 'p200')
