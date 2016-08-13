@@ -14,7 +14,8 @@ class JSONFormatter(ProtocolFormatter):
     def export(self):
         info = OrderedDict()
         i = self._protocol.info
-        order = ['name', 'author', 'description', 'created', 'updated']
+        order = ['name', 'author', 'description', 'version', 'version_hash',
+                 'created', 'updated']
         for key in order:
             v = i.pop(key, None)
             if v is not None:

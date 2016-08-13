@@ -1,7 +1,6 @@
 import unittest
 from labsuite.protocol import Protocol
 
-
 class ProtocolTest(unittest.TestCase):
 
     def setUp(self):
@@ -200,3 +199,36 @@ class ProtocolTest(unittest.TestCase):
         self.protocol.transfer('A1:A2', 'A1:A3', ul=80)
         self.protocol.run_all()
         self.protocol.run_all()
+
+    def test_protocol_version(self):
+        # Set up a protocol.
+        self.protocol.add_instrument('A', 'p200')
+        self.protocol.add_container('C1', 'tiprack.p200')
+        self.protocol.add_container('A1', 'microplate.96')
+        self.protocol.calibrate('A1', x=1, y=2, z=3)
+        self.protocol.calibrate_instrument('A', top=0, blowout=10)
+        self.protocol.transfer('A1:A1', 'A1:A2', ul=100)
+        self.protocol.transfer('A1:A2', 'A1:A3', ul=80)
+
+        # First version bump.
+        v1 = self.protocol.bump_version()
+        self.assertEqual(v1, '0.0.1')
+
+        # No changes, version will stay the same.
+        v2 = self.protocol.bump_version()
+        self.assertEqual(v1, v2)
+
+        # Make a change, bump the version.
+        self.protocol.transfer('A1:A2', 'A1:A3', ul=80)
+        v3 = self.protocol.bump_version()
+        self.assertEqual(v3, '0.0.2')
+
+        # Make a change, bump the version.
+        self.protocol.transfer('A1:A1', 'A1:A1', ul=20)
+        v4 = self.protocol.bump_version('feature')
+        self.assertEqual(v4, '0.1.0')
+
+        # Make a change, bump the version.
+        self.protocol.transfer('A1:A1', 'A1:A1', ul=20)
+        v5 = self.protocol.bump_version('major')
+        self.assertEqual(v5, '1.0.0')

@@ -113,6 +113,10 @@ class Protocol():
             minor = 0
             feature = 0
             major += 1
+        else:
+            raise ValueError(
+                "Impact must be one of: minor, feature, major."
+            )
         self._version = (major, feature, minor)
         self._version_hash = vhash
         return self.version

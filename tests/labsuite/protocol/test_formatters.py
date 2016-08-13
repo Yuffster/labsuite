@@ -10,14 +10,14 @@ from labsuite.protocol import Protocol
 
 class ProtocolFormatterTest(unittest.TestCase):
 
-    json = Template("""
+    json = """
     {
         "info": {
             "name": "Test Protocol",
             "author": "Michelle Steigerwalt",
             "description": "A protocol to test JSON output.",
             "created": "Thu Aug 11 20:19:55 2016",
-            "updated": "$updated"
+            "updated": ""
         },
         "instruments": {
             "p10_a": {
@@ -74,17 +74,18 @@ class ProtocolFormatterTest(unittest.TestCase):
             }
         ]
     }
-    """)
+    """
 
     def setUp(self):
         self.protocol = Protocol()
+        self.stub_info = {
+            'name': "Test Protocol",
+            'description': "A protocol to test JSON output.",
+            'author': "Michelle Steigerwalt",
+            'created': "Thu Aug 11 20:19:55 2016"
+        }
         # Same definitions as the protocol JSON above.
-        self.protocol.set_info(
-            name="Test Protocol",
-            description="A protocol to test JSON output.",
-            author="Michelle Steigerwalt",
-            created="Thu Aug 11 20:19:55 2016"
-        )
+        self.protocol.set_info(**self.stub_info)
         self.protocol.add_instrument('A', 'p10')
         self.protocol.add_container('A1', 'microplate.96', label="Ingredients")
         self.protocol.add_container('B1', 'microplate.96', label="Output")
@@ -97,32 +98,36 @@ class ProtocolFormatterTest(unittest.TestCase):
             ul=10
         )
 
-    def testJSON(self):
-        i = self.protocol.info
-        result = self.protocol.export(JSONFormatter)
-        expected = self.json.substitute(updated=i['updated'])
-        self.assertEqual(json.loads(expected), json.loads(result))
+    def test_json_export(self):
+        result = json.loads(self.protocol.export(JSONFormatter))
+        expected = json.loads(self.json)
+        self.assertEqual(self.protocol.version, '0.0.1')
+        for k, v in self.stub_info.items():
+            self.assertEqual(v, result['info'][k])
+        self.assertEqual(result["info"]["version"], self.protocol.version)
+        self.assertEqual(result["info"]["version_hash"], self.protocol.hash)
+        expected['info'] = ""
+        result['info'] = ""
+        self.assertEqual(expected, result)
 
-    def testInvalidJSON(self):
+    def test_invalid_json(self):
         with self.assertRaises(KeyError):
             # This fails because there's no tiprack or trash.
             # (Better exceptions pending.)
             self.protocol.export(JSONFormatter, validate_run=True)
 
-    def testLoadJSON(self):
-        start = self.json.substitute(updated="")
-        f = JSONLoader(self.json.substitute(updated=""))
+    def test_load_json(self):
+        start = self.json
+        f = JSONLoader(self.json)
         dump = f.protocol.export(JSONFormatter)
         result = json.loads(dump)
         expected = json.loads(start)
-        expected['info']['created'] = ""
-        expected['info']['updated'] = ""
-        result['info']['created'] = ""
-        result['info']['updated'] = ""
+        expected['info'] = ""
+        result['info'] = ""
         self.assertEqual(expected, result)  # ✨  OMG isomorphic! ✨
 
-    def testEqualHashing(self):
-        p = JSONLoader(self.json.substitute(updated="")).protocol
+    def test_equal_hashing(self):
+        p = JSONLoader(self.json).protocol
         # Hashes of all protocol run-related data within the JSON and manually
         # defined protcol are equal.
         self.assertEqual(self.protocol.hash, p.hash)
