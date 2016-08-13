@@ -78,8 +78,7 @@ class ProtocolFormatterTest(unittest.TestCase):
 
     def setUp(self):
         self.protocol = Protocol()
-
-    def testJSON(self):
+        # Same definitions as the protocol JSON above.
         self.protocol.set_info(
             name="Test Protocol",
             description="A protocol to test JSON output.",
@@ -97,17 +96,17 @@ class ProtocolFormatterTest(unittest.TestCase):
             tool='p10',
             ul=10
         )
+
+    def testJSON(self):
         i = self.protocol.info
         result = self.protocol.export(JSONFormatter)
         expected = self.json.substitute(updated=i['updated'])
         self.assertEqual(json.loads(expected), json.loads(result))
 
     def testInvalidJSON(self):
-        self.protocol.add_instrument('A', 'p10')
-        self.protocol.add_container('A1', 'microplate.96', label="Ingredients")
-        self.protocol.add_container('B1', 'microplate.96')
-        self.protocol.transfer('A1:A1', 'B1:B1', ul=10, tool='p10')
         with self.assertRaises(KeyError):
+            # This fails because there's no tiprack or trash.
+            # (Better exceptions pending.)
             self.protocol.export(JSONFormatter, validate_run=True)
 
     def testLoadJSON(self):
@@ -121,3 +120,13 @@ class ProtocolFormatterTest(unittest.TestCase):
         result['info']['created'] = ""
         result['info']['updated'] = ""
         self.assertEqual(expected, result)  # ✨  OMG isomorphic! ✨
+
+    def testEqualHashing(self):
+        p = JSONLoader(self.json.substitute(updated="")).protocol
+        # Hashes of all protocol run-related data within the JSON and manually
+        # defined protcol are equal.
+        self.assertEqual(self.protocol.hash, p.hash)
+        # Make a modification of the original protocol.
+        p.add_instrument('B', 'p20')
+        # Hashes are different.
+        self.assertNotEqual(self.protocol.hash, p.hash)

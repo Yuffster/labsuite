@@ -3,30 +3,22 @@ from labsuite.labware.grid import normalize_position, humanize_position
 import labsuite.drivers.motor as motor_drivers
 from labsuite.util.log import debug
 from labsuite.protocol.handlers import ContextHandler, MotorControlHandler
+from labsuite.util import hashing
 
 import time
 import copy
 import logging
 
+
 class Protocol():
 
+    # Operational data.
     _ingredients = None  # { 'name': "A1:A1" }
-
     _instruments = None  # { motor_axis: instrument }
-
     _container_labels = None  # Aliases. { 'foo': (0,0), 'bar': (0,1) }
     _label_case = None  # Capitalized labels.
-
-    _commands = None  # []
-
-    _handlers = None  # List of attached handlers for run_next.
-
-    # Context and Motor are important handlers, so we provide
-    # a way to get at them.
-    _context_handler = None  # Operational context (virtual robot).
-    _motor_handler = None
-
     _containers = None  # { slot: container_name }
+    _commands = None  # []
 
     # Metadata
     _name = None
@@ -34,6 +26,14 @@ class Protocol():
     _created = None
     _updated = None
     _author = None
+    _version = None
+    _version_hash = None  # Only saved when the version is updated.
+
+    # Context and Motor are important handlers, so we provide
+    # a way to get at them.
+    _handlers = None  # List of attached handlers for run_next.
+    _context_handler = None  # Operational context (virtual robot).
+    _motor_handler = None
 
     def __init__(self):
         self._ingredients = {}
@@ -377,6 +377,17 @@ class Protocol():
         self.run_all()
         self._motor_handler = mh  # Put everything back the way it was.
         logger.disabled = False
+
+    @property
+    def hash(self):
+        return hashing.hash_data([
+            self._ingredients,
+            self._instruments,
+            self._container_labels,
+            self._label_case,
+            self._containers,
+            self._commands
+        ])
 
     @property
     def commands(self):
