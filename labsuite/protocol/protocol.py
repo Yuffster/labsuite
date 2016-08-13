@@ -46,7 +46,7 @@ class Protocol():
         self._initialize_context()
 
     def set_info(self, name=None, description=None, created=None,
-                 updated=None, author=None, **kwargs):
+                 updated=None, author=None, version=None, **kwargs):
         """
         Sets the information metatadata of the protocol.
         """
