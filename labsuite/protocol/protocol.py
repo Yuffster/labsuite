@@ -26,7 +26,7 @@ class Protocol():
     _created = None
     _updated = None
     _author = None
-    _version = None
+    _version = (0, 0, 0)
     _version_hash = None  # Only saved when the version is updated.
 
     # Context and Motor are important handlers, so we provide
@@ -45,7 +45,8 @@ class Protocol():
         self._handlers = []
         self._initialize_context()
 
-    def set_info(self, name=None, description=None, created=None, updated=None, author=None):
+    def set_info(self, name=None, description=None, created=None,
+                 updated=None, author=None, **kwargs):
         """
         Sets the information metatadata of the protocol.
         """
@@ -59,6 +60,9 @@ class Protocol():
             self._created = created
         if updated is not None:
             self._updated = updated
+        if version is not None:
+            self._version = tuple(map(int, version.split('.')))
+            self._version_hash = self.hash
 
     @property
     def info(self):
@@ -75,7 +79,43 @@ class Protocol():
             o['description'] = self._description
         o['created'] = self._created or str(time.strftime("%c"))
         o['updated'] = self._updated or str(time.strftime("%c"))
+        o['version'] = self.version
+        o['version_hash'] = self.hash
         return o
+
+    @property
+    def hash(self):
+        return hashing.hash_data([
+            self._ingredients,
+            self._instruments,
+            self._container_labels,
+            self._label_case,
+            self._containers,
+            self._commands
+        ])
+
+    @property
+    def version(self):
+        return ".".join(map(str, self._version))
+
+    def bump_version(self, impact="minor"):
+        vhash = self.hash
+        if vhash == self._version_hash:
+            # Don't bump the version if it's the same.
+            return self.version
+        major, feature, minor = self._version
+        if impact == "minor":
+            minor += 1
+        elif impact == "feature":
+            minor = 0
+            feature += 1
+        elif impact == "major":
+            minor = 0
+            feature = 0
+            major += 1
+        self._version = (major, feature, minor)
+        self._version_hash = vhash
+        return self.version
 
     def add_container(self, slot, name, label=None):
         slot = normalize_position(slot)
@@ -379,17 +419,6 @@ class Protocol():
         logger.disabled = False
 
     @property
-    def hash(self):
-        return hashing.hash_data([
-            self._ingredients,
-            self._instruments,
-            self._container_labels,
-            self._label_case,
-            self._containers,
-            self._commands
-        ])
-
-    @property
     def commands(self):
         return copy.deepcopy(self._commands)
 
@@ -429,6 +458,7 @@ class Protocol():
         virtual robot to catch any runtime errors (ie, no tipracks or
         trash assigned).
         """
+        self.bump_version()  # Bump if it hasn't happened manually.
         if validate_run:
             self._virtual_run()
         f = Formatter(self, **kwargs)
