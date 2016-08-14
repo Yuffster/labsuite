@@ -320,3 +320,53 @@ class ProtocolTest(unittest.TestCase):
         p.transfer('A1:A1', 'A1:A3', ul=1)
         # This should export because there are no Partial problems.
         p.export(JSONFormatter)
+
+    def test_protocol_addition_of_partial(self):
+        p1 = Protocol()
+        p1.add_instrument('A', 'p20')
+        p1.add_container('A1', 'microplate.96')
+        p1.transfer('A1:A1', 'A1:A2', ul=10)
+
+        p2 = Protocol.partial()
+        p2.add_container('A2', 'microplate.96')
+        p2.transfer('A1:A1', 'A1:A3', ul=20)
+        p2.transfer('A2:A1', 'A2:A4', ul=15)
+
+        p3 = Protocol()
+        p3.add_instrument('A', 'p20')
+        p3.add_container('A1', 'microplate.96')
+        p3.add_container('A2', 'microplate.96')
+        p3.transfer('A1:A1', 'A1:A2', ul=10)
+        p3.transfer('A1:A1', 'A1:A3', ul=20)
+        p3.transfer('A2:A1', 'A2:A4', ul=15)
+
+        self.assertEqual(p3, p1 + p2)
+
+    def test_protocol_addition_of_partials(self):
+        p1 = Protocol()
+        p1.add_instrument('A', 'p20')
+        p1.add_container('A1', 'microplate.96')
+        p1.transfer('A1:A1', 'A1:A2', ul=10)
+
+        p2 = Protocol.partial()
+        p2.add_container('A2', 'microplate.96')
+        p2.transfer('A1:A1', 'A1:A3', ul=20)
+        p2.transfer('A2:A1', 'A2:A4', ul=15)
+
+        p3 = Protocol.partial()
+        p3.add_container('A3', 'microplate.96')
+        p3.transfer('A1:A1', 'A1:A3', ul=20)
+        p3.transfer('A1:A1', 'A3:A4', ul=15)
+
+        p4 = Protocol()
+        p4.add_instrument('A', 'p20')
+        p4.add_container('A1', 'microplate.96')
+        p4.add_container('A2', 'microplate.96')
+        p4.add_container('A3', 'microplate.96')
+        p4.transfer('A1:A1', 'A1:A2', ul=10)
+        p4.transfer('A1:A1', 'A1:A3', ul=20)
+        p4.transfer('A2:A1', 'A2:A4', ul=15)
+        p4.transfer('A1:A1', 'A1:A3', ul=20)
+        p4.transfer('A1:A1', 'A3:A4', ul=15)
+
+        self.assertEqual(p4, p1 + p2 + p3)

@@ -135,6 +135,11 @@ class Protocol():
     def __eq__(self, protocol):
         return self.hash == protocol.hash
 
+    def __add__(self, b):
+        if isinstance(b, PartialProtocol):
+            b.reapply(self)
+            return self
+
     def add_container(self, slot, name, label=None):
         slot = normalize_position(slot)
         if (label):
@@ -557,6 +562,40 @@ class PartialProtocol():
                     self._problems.append(str(e))
             return catch
         return prop
+
+    def __add__(self, b):
+        """
+        Combines other Protocols with this one by concatenating the
+        list of stored calls.
+
+        Raises an exception if the user tries to add an actual instance to
+        this proxy, since actual instances don't log their calls and we want
+        to preserve the call order.
+        """
+        if isinstance(b, type(self)):
+            # Combine the stored calls of other proxy objects.
+            for method, args, kwargs in b._calls:
+                getattr(self, method)(*args, **kwargs)
+            return self
+        else:
+            # We can't concat an actual Protocol because Protocols don't
+            # log their calls.
+            raise TypeError(
+                "Can't add Protocol to PartialProtocol;"+
+                " try reversing the operand order."
+            )
+
+    def reapply(self, thing):
+        """
+        Take all the stored calls and call them on an actual instance.
+
+        Or get a bunch of method missing errors.
+
+        We don't check for instance compatibility by type because we might
+        want to combine disparate objects with the same interface.
+        """
+        for method, args, kwargs in self._calls:
+            getattr(thing, method)(*args, **kwargs)
 
     @property
     def problems(self):
