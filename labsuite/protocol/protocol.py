@@ -4,7 +4,7 @@ import labsuite.drivers.motor as motor_drivers
 from labsuite.util.log import debug
 from labsuite.protocol.handlers import ContextHandler, MotorControlHandler
 from labsuite.util import hashing
-from labsuite.util.exceptions import *
+from labsuite.util import exceptions as x
 
 import time
 import copy
@@ -138,7 +138,7 @@ class Protocol():
         if (label):
             lowlabel = label.lower()
             if lowlabel in self._container_labels:
-                raise ContainerConflict(
+                raise x.ContainerConflict(
                     "Label already in use: {}".format(label)
                 )
             # Maintain label capitalization, but only one form.
@@ -288,9 +288,9 @@ class Protocol():
                 slot = self._container_labels[slot]
 
         if not slot:
-            raise MissingContainer("No slot defined for {}".format(name))
+            raise x.MissingContainer("No slot defined for {}".format(name))
         if slot not in self._deck:
-            raise MissingContainer("Nothing in slot: {}".format(name))
+            raise x.MissingContainer("Nothing in slot: {}".format(name))
 
         return self._deck[slot]
 
@@ -316,7 +316,7 @@ class Protocol():
             # Try to find the slot as a label.
             container = container.lower()
             if container not in self._container_labels:
-                raise MissingContainer(
+                raise x.MissingContainer(
                     "Container not found: {}".format(container)
                 )
             container = self._container_labels[container]
@@ -343,7 +343,9 @@ class Protocol():
         except ValueError:
             # If it's not a tuple position, it's a string label.
             if start.lower() not in self._container_labels:
-                raise ContainerMissing("Invalid container: {}".format(start))
+                raise x.ContainerMissing(
+                    "Invalid container: {}".format(start)
+                )
             start = self._label_case.get(start.lower(), start)
         end = humanize_position(end)
         return "{}:{}".format(start, end)
@@ -403,7 +405,7 @@ class Protocol():
         """
         method = getattr(self._context_handler, command)
         if not method:
-            raise MissingCommand("Command not defined: " + command)
+            raise x.MissingCommand("Command not defined: " + command)
         method(**kwargs)
 
     def _run(self, index):
