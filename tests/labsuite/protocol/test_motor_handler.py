@@ -1,5 +1,6 @@
 import unittest
 from labsuite.protocol import Protocol
+from labsuite.util.exceptions import *
 
 
 class MotorHandlerTest(unittest.TestCase):
@@ -82,7 +83,7 @@ class MotorHandlerTest(unittest.TestCase):
         self.protocol.calibrate_instrument('B', top=0, blowout=10)
         self.protocol.transfer('A1:A1', 'A1:A2', ul=100)
         self.protocol.transfer('A1:A2', 'A1:A3', ul=80)
-        with self.assertRaises(KeyError):
+        with self.assertRaises(MissingContainer):
             for progress in self.protocol.run():
                 continue
 
@@ -95,6 +96,6 @@ class MotorHandlerTest(unittest.TestCase):
         self.protocol.calibrate_instrument('B', top=0, blowout=10)
         self.protocol.transfer('A1:A1', 'A1:A2', ul=100)
         self.protocol.transfer('A1:A2', 'A1:A3', ul=80)
-        with self.assertRaises(KeyError):
+        with self.assertRaises(MissingContainer):
             for progress in self.protocol.run():
                 continue

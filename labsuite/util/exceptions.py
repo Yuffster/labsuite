@@ -7,6 +7,12 @@ class ProtocolException(Exception):
 	Protocol.
 	"""
 
+class MissingData(ProtocolException):
+	"""
+	Thrown when not enough data is provided either by the user or the
+	context to complete a call.
+	"""
+
 class ProtocolConflict(ProtocolException):
 	"""
 	Raised when a Protocol definition conflicts with another in the same
