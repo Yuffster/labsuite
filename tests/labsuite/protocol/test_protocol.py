@@ -1,5 +1,6 @@
 import unittest
 from labsuite.protocol import Protocol
+from labsuite.protocol.formatters import JSONFormatter
 from labsuite.util import exceptions as x
 
 class ProtocolTest(unittest.TestCase):
@@ -284,3 +285,38 @@ class ProtocolTest(unittest.TestCase):
         self.protocol.transfer('A1:A1', 'A1:A1', ul=20)
         v5 = self.protocol.bump_version('major')
         self.assertEqual(v5, '1.0.0')
+
+    def test_partial_protocol(self):
+        p = Protocol.partial()
+        p.transfer('A1:A1', 'A1:A3', ul=1)
+        # As long as it doesn't throw an Exception, we're good.
+
+    def test_partial_protocol_run(self):
+        p = Protocol.partial()
+        p.transfer('A1:A1', 'A1:A3', ul=1)
+        with self.assertRaises(x.PartialProtocolException):
+            # This shouldn't run because it's not valid.
+            p.run_all()
+
+    def test_valid_partial_protocol_run(self):
+        p = Protocol.partial()
+        p.add_instrument('A', 'p10')
+        p.add_container("A1", "microplate.96")
+        p.transfer('A1:A1', 'A1:A3', ul=1)
+        # This should run because there are no Partial problems.
+        p.run_all()
+
+    def test_partial_protocol_export(self):
+        p = Protocol.partial()
+        p.transfer('A1:A1', 'A1:A3', ul=1)
+        with self.assertRaises(x.PartialProtocolException):
+            # This shouldn't export because it's not valid.
+            p.export(JSONFormatter)
+
+    def test_valid_partial_protocol_export(self):
+        p = Protocol.partial()
+        p.add_instrument('A', 'p10')
+        p.add_container("A1", "microplate.96")
+        p.transfer('A1:A1', 'A1:A3', ul=1)
+        # This should export because there are no Partial problems.
+        p.export(JSONFormatter)

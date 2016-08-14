@@ -36,6 +36,8 @@ class Protocol():
     _context_handler = None  # Operational context (virtual robot).
     _motor_handler = None
 
+    _partial_proxy = None  # PartialProtocol wrapping as a proxy.
+
     def __init__(self):
         self._ingredients = {}
         self._container_labels = {}
@@ -376,6 +378,7 @@ class Protocol():
         A generator that runs each command and yields the current command
         index and the number of total commands.
         """
+        self.validate("Can't run an incomplete PartialProtocol.")
         self._initialize_context()
         i = 0
         yield(0, len(self._commands))
@@ -483,6 +486,7 @@ class Protocol():
         virtual robot to catch any runtime errors (ie, no tipracks or
         trash assigned).
         """
+        self.validate("Can't export invalid PartialProtocol.")
         self.bump_version()  # Bump if it hasn't happened manually.
         if validate_run:
             self._virtual_run()
@@ -500,3 +504,65 @@ class Protocol():
     def disconnect(self):
         if self._motor_handler:
             self._motor_handler.disconnect()
+
+    def validate(self, error_message="Invalid Partial Protocol"):
+        """
+        Determines whether or not this Protocol is valid.
+        """
+        if self._partial_proxy is not None and self._partial_proxy.is_valid is False:
+            raise x.PartialProtocolException(
+                error_message + " Problems: {}"
+                .format("; ".join(self._partial_proxy.problems))
+            )
+
+    @classmethod
+    def partial(self, *args, **kwargs):
+        """
+        Returns a Partial Protocol which can be appended to a full Protocol,
+        allowing ProtocolExceptions within the partial to be ignored until
+        final construction.
+        """
+        return PartialProtocol(Protocol(*args, **kwargs))
+
+
+class PartialProtocol():
+
+    _protocol = None  # Act as a proxy to this object.
+    _problems = None  # [] Holds caught ProtocolExceptions.
+    _calls = None  # [] Remember every call made to this proxy.
+
+    def __init__(self, protocol):
+        """
+        Wrap the original object so we can log calls and exceptions.
+        """
+        self._protocol = protocol
+        self._protocol._partial_proxy = self
+        self._problems = []
+        self._calls = []
+
+    def __getattr__(self, name):
+        """
+        Act as a proxy to the wrapped object and store all the calls for
+        later application on the desired instance.
+
+        If Exceptions occur, log them so they can be fixed.
+        """
+        prop = getattr(self._protocol, name)
+        if getattr(prop, '__call__', None) is not None:
+            def catch(*args, **kwargs):
+                try:
+                    self._calls.append((name, args, kwargs))
+                    prop(*args, **kwargs)
+                except x.ProtocolException as e:
+                    self._problems.append(str(e))
+            return catch
+        return prop
+
+    @property
+    def problems(self):
+        return copy.deepcopy(self._problems)
+
+    @property
+    def is_valid(self):
+        return len(self._problems) == 0
+

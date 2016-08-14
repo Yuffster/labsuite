@@ -7,6 +7,14 @@ class ProtocolException(Exception):
 	Protocol.
 	"""
 
+# Can't be a ProtocolException or it'll be ignored when we want to do a
+# PartialProtocol.
+class PartialProtocolException(Exception):
+	"""
+	Thrown when an invalid PartialProtocol is called in a way which
+	would cause it to have side effects (such as running on a machine).
+	"""
+
 class DataMissing(ProtocolException):
 	"""
 	Thrown when not enough data is provided either by the user or the
