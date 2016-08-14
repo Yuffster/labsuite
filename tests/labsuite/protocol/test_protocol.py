@@ -1,5 +1,6 @@
 import unittest
 from labsuite.protocol import Protocol
+from labsuite.util.exceptions import *
 
 class ProtocolTest(unittest.TestCase):
 
@@ -31,7 +32,7 @@ class ProtocolTest(unittest.TestCase):
 
     def test_humanize_address(self):
         self.protocol.add_container("A1", 'microplate.96', label="LaBeL")
-        with self.assertRaises(KeyError):
+        with self.assertRaises(ContainerConflict):
             self.protocol.add_container("A2", 'microplate.96', label="label")
         self.protocol.add_container("A2", 'microplate.96', label="stuff")
         lA1 = self.protocol.humanize_address(('label', 'A1'))

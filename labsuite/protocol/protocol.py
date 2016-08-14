@@ -4,6 +4,7 @@ import labsuite.drivers.motor as motor_drivers
 from labsuite.util.log import debug
 from labsuite.protocol.handlers import ContextHandler, MotorControlHandler
 from labsuite.util import hashing
+from labsuite.util.exceptions import *
 
 import time
 import copy
@@ -137,7 +138,9 @@ class Protocol():
         if (label):
             lowlabel = label.lower()
             if lowlabel in self._container_labels:
-                raise KeyError("Label already in use: {}".format(label))
+                raise ContainerConflict(
+                    "Label already in use: {}".format(label)
+                )
             # Maintain label capitalization, but only one form.
             if lowlabel not in self._label_case:
                 self._label_case[lowlabel] = label
@@ -280,13 +283,14 @@ class Protocol():
         try:
             slot = normalize_position(name)
         except TypeError:
+            # Try to find the slot as a label.
             if slot in self._container_labels:
                 slot = self._container_labels[slot]
 
         if not slot:
-            raise KeyError("Slot not defined: " + name)
+            raise MissingContainer("No slot defined for {}".format(name))
         if slot not in self._deck:
-            raise KeyError("Nothing in slot: " + name)
+            raise MissingContainer("Nothing in slot: {}".format(name))
 
         return self._deck[slot]
 
@@ -309,9 +313,12 @@ class Protocol():
         try:
             container = normalize_position(container)
         except ValueError:
+            # Try to find the slot as a label.
             container = container.lower()
             if container not in self._container_labels:
-                raise KeyError("Container not found: {}".format(container))
+                raise MissingContainer(
+                    "Container not found: {}".format(container)
+                )
             container = self._container_labels[container]
 
         return (container, well)
@@ -336,7 +343,7 @@ class Protocol():
         except ValueError:
             # If it's not a tuple position, it's a string label.
             if start.lower() not in self._container_labels:
-                raise ValueError("Invalid continer: {}".format(start))
+                raise ContainerMissing("Invalid container: {}".format(start))
             start = self._label_case.get(start.lower(), start)
         end = humanize_position(end)
         return "{}:{}".format(start, end)
@@ -396,7 +403,7 @@ class Protocol():
         """
         method = getattr(self._context_handler, command)
         if not method:
-            raise KeyError("Command not defined: " + command)
+            raise MissingCommand("Command not defined: " + command)
         method(**kwargs)
 
     def _run(self, index):
