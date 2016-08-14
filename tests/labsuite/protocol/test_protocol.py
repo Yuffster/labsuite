@@ -64,6 +64,20 @@ class ProtocolTest(unittest.TestCase):
         with self.assertRaises(x.InstrumentMissing):
             self.protocol.transfer('A1:A1', 'A1:A2', ul=10)
 
+    def test_transfer_without_volume(self):
+        with self.assertRaises(ValueError):
+            self.protocol.transfer("A1:A1", "A1:A1")
+
+    def test_transfer_zero_volume(self):
+        with self.assertRaises(ValueError):
+            self.protocol.transfer("A1:A1", "A1:A1", ul=0)
+        with self.assertRaises(ValueError):
+            self.protocol.transfer("A1:A1", "A1:A1", ml=0)
+
+    def test_transfer_conflicting_volume(self):
+        with self.assertRaises(ValueError):
+            self.protocol.transfer("A1:A1", "A1:A1", ul=1, ml=1)
+
     def test_transfer_group(self):
         """ Transfer group. """
         expected = [{

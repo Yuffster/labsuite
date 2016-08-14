@@ -173,10 +173,7 @@ class Protocol():
 
     def transfer(self, start, end, ul=None, ml=None,
                  blowout=True, touchtip=True, tool=None):
-        if ul:
-            volume = ul
-        else:
-            volume = ml * 1000
+        volume = self._normalize_volume(ul, ml)
         if tool is None:
             inst = self._context_handler.get_instrument(volume=volume)
             if inst is None:
@@ -197,10 +194,8 @@ class Protocol():
         )
 
     def transfer_group(self, *wells, ul=None, ml=None, **defaults):
-        if ul:
-            volume = ul
-        elif ml:
-            volume = ul * 1000
+        if ul or ml:
+            volume = self._normalize_volume(ul, ml)
         else:
             volume = None
         defaults.update({
@@ -216,8 +211,12 @@ class Protocol():
                 options.update(opts)
             else:
                 start, end = item
-            vol = options.get('ul') or options.get('ml', 0) * 1000
-            vol = vol or volume
+            ul = options.get('ul', None)
+            ml = options.get('ml', None)
+            if ul or ml:
+                vol = self._normalize_volume(ul, ml)
+            else:
+                vol = volume
             transfers.append({
                 'volume': vol,
                 'start': self._normalize_address(start),
@@ -298,6 +297,17 @@ class Protocol():
             raise x.MissingContainer("Nothing in slot: {}".format(name))
 
         return self._deck[slot]
+
+    def _normalize_volume(self, ul, ml):
+        if ul is None and ml is None:
+            raise ValueError("Volume must be provided as either ul or ml.")
+        if ul is 0 or ml is 0:
+            raise ValueError("Volume must exceed 0.")
+        if (ul and ml) and ml * 1000 != ul:
+            raise ValueError("Conflicting volumes for ml and ul.")
+        if ul:
+            return ul
+        return ml * 1000
 
     def _normalize_address(self, address):
         """
