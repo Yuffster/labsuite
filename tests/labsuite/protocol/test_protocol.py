@@ -370,3 +370,17 @@ class ProtocolTest(unittest.TestCase):
         p4.transfer('A1:A1', 'A3:A4', ul=15)
 
         self.assertEqual(p4, p1 + p2 + p3)
+
+    def test_protocol_added_to_partial(self):
+        p1 = Protocol()
+        p1.add_instrument('A', 'p20')
+        p1.add_container('A1', 'microplate.96')
+        p1.transfer('A1:A1', 'A1:A2', ul=10)
+
+        p2 = Protocol.partial()
+        p2.add_container('A2', 'microplate.96')
+        p2.transfer('A1:A1', 'A1:A3', ul=20)
+        p2.transfer('A2:A1', 'A2:A4', ul=15)
+
+        with self.assertRaises(TypeError):
+            p2 + p1
