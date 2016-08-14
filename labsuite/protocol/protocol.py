@@ -179,6 +179,11 @@ class Protocol():
             volume = ml * 1000
         if tool is None:
             inst = self._context_handler.get_instrument(volume=volume)
+            if inst is None:
+                raise x.InstrumentMissing(
+                    "No instrument found to handle volume of {}"
+                    .format(volume)
+                )
             tool = inst.name
 
         self.add_command(

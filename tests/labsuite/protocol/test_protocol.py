@@ -58,6 +58,12 @@ class ProtocolTest(unittest.TestCase):
         }]
         self.assertEqual(self.instructions, expected)
 
+    def test_transfer_without_pipette(self):
+        self.protocol.add_instrument('A', 'p200')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(x.InstrumentMissing):
+            self.protocol.transfer('A1:A1', 'A1:A2', ul=10)
+
     def test_transfer_group(self):
         """ Transfer group. """
         expected = [{
