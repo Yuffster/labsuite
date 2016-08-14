@@ -3,6 +3,7 @@ import unittest
 from labsuite.labware.reservoirs import Reservoir
 from labsuite.labware.liquids import LiquidInventory
 from labsuite.labware.deck import Deck
+from labsuite.util import exceptions as x
 
 
 class ReservoirTest(unittest.TestCase):
@@ -17,14 +18,14 @@ class ReservoirTest(unittest.TestCase):
         Row sanity check.
         """
         row = self.reservoir.rows + 1
-        with self.assertRaises(KeyError):
+        with self.assertRaises(x.SlotMissing):
             self.reservoir.get_child('A{}'.format(row))
 
     def col_sanity_test(self):
         """
         Column sanity check.
         """
-        with self.assertRaises(KeyError):
+        with self.assertRaises(x.SlotMissing):
             self.reservoir.get_child('B1')
 
 
@@ -41,14 +42,14 @@ class ReservoirWellTest(unittest.TestCase):
         self.assertEqual(vol, set_vol)
 
     def liquid_capacity_test(self):
-        with self.assertRaises(ValueError):
+        with self.assertRaises(x.LiquidOverflow):
             self.row.allocate(water=10000, ml=True)
 
     def liquid_total_capacity_test(self):
         row = self.row
         row.allocate(water=20, ml=True)
         row.add_liquid(water=1, ml=True)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(x.LiquidOverflow):
             row.add_liquid(water=1, ml=True)
 
     def named_liquid_test(self):
@@ -58,7 +59,7 @@ class ReservoirWellTest(unittest.TestCase):
     def liquid_total_mixture_test(self):
         self.row.allocate(water=20000)
         self.row.add_liquid(buffer=1000)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(x.LiquidOverflow):
             self.row.add_liquid(saline=1)
 
 
@@ -78,7 +79,7 @@ class LiquidDebtTest(unittest.TestCase):
         LiquidInventory._allow_liquid_debt = self._allow_liquid_debt
         LiquidInventory._allow_unspecified_liquids = self._allow_unspec
 
-    def liquid_total_capacity_test(self):
+    def test_liquid_total_capacity_test(self):
         """
         Supports negative liquid capacity.
         """
@@ -96,7 +97,7 @@ class LiquidDebtTest(unittest.TestCase):
         LiquidInventory._allow_unspecified_liquids = False
         row1 = self.reservoir.row(1)
         row2 = self.reservoir.row(2)
-        with self.assertRaises(Exception):
+        with self.assertRaises(x.DataMissing):
             # This shouldn't work because we have no idea what they're
             # transfering, so it's not very useful to us.
             row1.transfer(1000, row2)

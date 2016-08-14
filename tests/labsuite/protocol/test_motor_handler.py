@@ -1,6 +1,6 @@
 import unittest
 from labsuite.protocol import Protocol
-from labsuite.util.exceptions import *
+from labsuite.util import exceptions as x
 
 
 class MotorHandlerTest(unittest.TestCase):
@@ -82,8 +82,7 @@ class MotorHandlerTest(unittest.TestCase):
         self.protocol.add_container('A1', 'microplate.96')
         self.protocol.calibrate_instrument('B', top=0, blowout=10)
         self.protocol.transfer('A1:A1', 'A1:A2', ul=100)
-        self.protocol.transfer('A1:A2', 'A1:A3', ul=80)
-        with self.assertRaises(MissingContainer):
+        with self.assertRaises(x.ContainerMissing):
             for progress in self.protocol.run():
                 continue
 
@@ -96,6 +95,11 @@ class MotorHandlerTest(unittest.TestCase):
         self.protocol.calibrate_instrument('B', top=0, blowout=10)
         self.protocol.transfer('A1:A1', 'A1:A2', ul=100)
         self.protocol.transfer('A1:A2', 'A1:A3', ul=80)
-        with self.assertRaises(MissingContainer):
+        with self.assertRaises(x.ContainerMissing):
             for progress in self.protocol.run():
                 continue
+
+    def test_instrument_missing(self):
+        with self.assertRaises(x.InstrumentMissing):
+            m = self.protocol.attach_motor()
+            m.get_pipette(volume=1000)

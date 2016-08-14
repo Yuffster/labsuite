@@ -1,5 +1,5 @@
 from math import floor
-
+from labsuite.util import exceptions as x
 
 def normalize_position(position):
     """
@@ -72,7 +72,7 @@ def humanize_position(position):
     """
     col, row = normalize_position(position)
     if col > 25:  # Support this later.
-        raise ValueError(
+        raise x.SlotMissing(
             "Column value of {} is out of supported range."
             .format(col)
         )
@@ -236,16 +236,18 @@ class GridContainer():
         that the given coordinates are within bounds of the grid.
         """
         col, row = normalize_position(position)
+        # Not Protocol.DataMissing because it's not data provided through
+        # the protocol API, and as such can't be resolved by the user.
         if self.rows is None:
             raise Exception("No maximum row number provided.")
         if self.cols is None:
             raise Exception("No maximum column number provided.")
         if self.rows and (row + 1 > self.rows):  # row is zero-indexed
-            raise KeyError(
+            raise x.SlotMissing(
                 "Row #{} out of range (max is {}).".format(row, self.rows)
             )
         if self.cols and col + 1 > self.cols:  # col is zero-indexed
-            raise KeyError(
+            raise x.SlotMissing(
                 "Column {} out of range (max is {})."
                 .format(chr(col + ord('A')), chr(self.cols - 1 + ord('A')))
             )
@@ -256,7 +258,7 @@ class GridContainer():
         Returns a col, row tuple for a position after the given offset.
         """
         if offset > self.total_wells:
-            raise KeyError(
+            raise x.SlotMissing(
                 "Position at offset {} out of range. Max is {}."
                 .format(offset, self.total_wells)
             )

@@ -1,6 +1,6 @@
 import unittest
-
 from labsuite.labware import tipracks
+from labsuite.util import exceptions as x
 
 
 class TiprackTest(unittest.TestCase):
@@ -45,7 +45,7 @@ class TiprackTest(unittest.TestCase):
         Maintain sanity of column values.
         """
         col = chr(ord('a') + self.rack.cols)
-        with self.assertRaises(KeyError):
+        with self.assertRaises(x.SlotMissing):
             self.rack.tip('{}1'.format(col))
 
         col = chr(ord('a') + self.rack.cols - 1)
@@ -57,7 +57,7 @@ class TiprackTest(unittest.TestCase):
         """
         row = self.rack.rows + 1
 
-        with self.assertRaises(KeyError):
+        with self.assertRaises(x.SlotMissing):
             self.rack.tip('A{}'.format(row))
 
         row = self.rack.rows

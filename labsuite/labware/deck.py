@@ -1,6 +1,6 @@
 from labsuite.labware.grid import GridContainer, humanize_position
 from labsuite.labware.containers import load_container
-
+from labsuite.util import exceptions as x
 
 class Deck(GridContainer):
 
@@ -23,7 +23,7 @@ class Deck(GridContainer):
             self._children[pos] = mod
             mod.position = position
         else:
-            raise KeyError(
+            raise x.ContainerConflict(
                 "Module already allocated to slot: {}."
                 .format(humanize_position(pos))
             )
@@ -41,8 +41,8 @@ class Deck(GridContainer):
     def slot(self, position):
         pos = self._normalize_position(position)
         if pos not in self._children:
-            raise KeyError(
-                "No deck module at slot {}/{}."
-                .format(humanize_position(pos), pos)
+            raise x.ContainerMissing(
+                "No deck module at slot {}."
+                .format(humanize_position(pos))
             )
         return self._children[pos]

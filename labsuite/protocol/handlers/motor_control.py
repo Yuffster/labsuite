@@ -1,7 +1,7 @@
 from labsuite.util.log import debug
 from labsuite.protocol.handlers import ProtocolHandler
 import labsuite.drivers.motor as motor_drivers
-
+from labsuite.util import exceptions as x
 
 class MotorControlHandler(ProtocolHandler):
 
@@ -86,6 +86,10 @@ class MotorControlHandler(ProtocolHandler):
         blowout of a certain pipette and volume.
         """
         pipette = self._context.get_instrument(**kwargs)
+        if pipette is None:
+            raise x.InstrumentMissing(
+                "Can't find instrument for {}".format(kwargs)
+            )
         axis = pipette.axis
         if axis not in self._pipette_motors:
             self._pipette_motors[axis] = PipetteMotor(pipette, self)

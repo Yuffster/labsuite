@@ -7,7 +7,7 @@ class ProtocolException(Exception):
 	Protocol.
 	"""
 
-class MissingData(ProtocolException):
+class DataMissing(ProtocolException):
 	"""
 	Thrown when not enough data is provided either by the user or the
 	context to complete a call.
@@ -32,55 +32,60 @@ class InstrumentConflict(ProtocolConflict):
 	desired axis is already in use.
 	"""
 
-class ProtocolMissingItem(ProtocolException):
+class ProtocolItemMissing(ProtocolException):
 	"""
 	Raised when an element is missing from a Protocol, such as when a
 	transfer references a container that doesn't exist.
 	"""
 
-class MissingInstrument(ProtocolMissingItem):
+class InstrumentMissing(ProtocolItemMissing):
 	"""
 	Raised when an instrument an indicated instrument does not exist, or when
 	no instrument can be found to complete a particular task.
 	"""
 
-class MissingContainer(ProtocolMissingItem):
+class ContainerMissing(ProtocolItemMissing):
 	"""
 	Raised when an indicated container does not exist in a Protocol.
 	"""
 
-class MissingTip(ProtocolMissingItem):
+class TipMissing(ProtocolItemMissing):
 	"""
-	Thrown when no available tip can be found to attach to a particular
+	Raised when no available tip can be found to attach to a particular
 	pipette.
 	"""
 
-class MissingCommand(ProtocolMissingItem):
+class CommandMissing(ProtocolItemMissing):
 	"""
-	Thrown when a desired command is unavailable.
+	Raised when a desired command is unavailable.
 	"""
 
-class VolumeException(ProtocolException):
+class SlotMissing(ProtocolItemMissing):
 	"""
-	Thrown when something is wrong with the volume designated in a transfer,
+	Riased when a slot position isn't available on a container.
+	"""
+
+class LiquidException(ProtocolException):
+	"""
+	Raised when something is wrong with the volume designated in a transfer,
 	either that the source well does not contain the requisite amount or when
 	the destination will be overflowed by a transfer.
 	"""
 
-class VolumeOverflow(VolumeException):
+class LiquidOverflow(LiquidException):
 	"""
-	Thrown when the volume to be transferred to a destination exceeds the
+	Raised when the volume to be transferred to a destination exceeds the
 	maximum capacity of a well.
 	"""
 
-class VolumeUnavailable(VolumeException):
+class LiquidUnavailable(LiquidException):
 	"""
-	Thrown when the volume to be transferred does not exist or is
+	Raised when the volume to be transferred does not exist or is
 	insufficient.
 	"""
 
-class VolumeMismatch(VolumeException):
+class LiquidMismatch(LiquidException):
 	"""
-	Thrown when the volume specified is of a different type than what is
+	Raised when the volume specified is of a different type than what is
 	available in a particular container.
 	"""

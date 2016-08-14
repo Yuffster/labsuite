@@ -1,7 +1,8 @@
 import unittest
-
 from labsuite.labware.microplates import Microplate
 from labsuite.labware.deck import Deck
+from labsuite.util import exceptions as x
+
 
 class MicroplateTest(unittest.TestCase):
 
@@ -35,7 +36,7 @@ class MicroplateTest(unittest.TestCase):
     def col_sanity_test(self):
         """Don't return out-of-range columns."""
         col = chr(ord('a') + self.plate.cols + 1)
-        with self.assertRaises(KeyError):
+        with self.assertRaises(x.SlotMissing):
             self.plate.well('{}1'.format(col))
 
     def unicode_coord_test(self):
@@ -45,7 +46,7 @@ class MicroplateTest(unittest.TestCase):
     def row_sanity_test(self):
         """Don't return out-of-range rows."""
         row = self.plate.rows + 1
-        with self.assertRaises(KeyError):
+        with self.assertRaises(x.SlotMissing):
             self.plate.well('A{}'.format(row))
 
     def col_type_sanity_test(self):
@@ -72,21 +73,21 @@ class MicroplateWellTest(unittest.TestCase):
         """Reject well overflow volumes."""
         set_vol = 10000
         # Way too much water for a microplate!
-        with self.assertRaises(ValueError):
+        with self.assertRaises(x.LiquidOverflow):
             self.well.allocate(water=set_vol)
 
     def liquid_total_capacity_test(self):
         """Reject combined well overflow."""
         self.well.allocate(water=90)
         self.well.add_liquid(water=10)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(x.LiquidOverflow):
             self.well.add_liquid(water=1)
 
     def liquid_total_mixture_test(self):
         """Reject combined well overflow from mixed liquids."""
         self.well.allocate(water=90)
         self.well.add_liquid(buffer=10)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(x.LiquidOverflow):
             self.well.add_liquid(saline=1)
 
     def mixture_transfer_test(self):
@@ -123,19 +124,19 @@ class MicroplateWellTest(unittest.TestCase):
 
     def proportion_key_error_test(self):
         """Raises for proportion of liquid not present in mixture."""
-        with self.assertRaises(KeyError):
+        with self.assertRaises(x.LiquidMismatch):
             self.well.get_proportion('water')
 
     def liquid_key_error_test(self):
         """Raises if wrong liquid named in get_volume."""
         self.well.allocate(saline=10)
-        with self.assertRaises(KeyError):
+        with self.assertRaises(x.LiquidMismatch):
             self.well.get_volume('water')
 
     def liquid_value_error_test(self):
         """Raises on named get_volume if multiple liquids present."""
         self.well.allocate(water=10, saline=10)
-        with self.assertRaises(ValueError):
+        with self.assertRaises(x.LiquidMismatch):
             self.well.get_volume('water')
 
     def ml_conversion_test(self):

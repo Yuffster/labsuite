@@ -6,7 +6,7 @@ import json
 from string import Template
 from labsuite.protocol.formatters.json import JSONFormatter, JSONLoader
 from labsuite.protocol import Protocol
-from labsuite.util.exceptions import *
+from labsuite.util import exceptions as x
 
 
 class ProtocolFormatterTest(unittest.TestCase):
@@ -112,7 +112,7 @@ class ProtocolFormatterTest(unittest.TestCase):
         self.assertEqual(expected, result)
 
     def test_invalid_json(self):
-        with self.assertRaises(MissingContainer):
+        with self.assertRaises(x.ContainerMissing):
             # This fails because there's no tiprack or trash.
             self.protocol.export(JSONFormatter, validate_run=True)
 

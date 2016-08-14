@@ -1,6 +1,6 @@
 from labsuite.protocol.handlers import ProtocolHandler
 from labsuite.labware import deck, pipettes
-from labsuite.util.exceptions import *
+from labsuite.util import exceptions as x
 
 
 class ContextHandler(ProtocolHandler):
@@ -35,7 +35,7 @@ class ContextHandler(ProtocolHandler):
         if axis is not None:
             axis = self.normalize_axis(axis)
             if axis not in self._instruments:
-                raise MissingInstrument(
+                raise x.InstrumentMissing(
                     "No instrument assigned to {} axis.".format(axis)
                 )
             else:
@@ -70,7 +70,7 @@ class ContextHandler(ProtocolHandler):
         if len(ks) is 1:
             return self.get_instrument(axis=ks[0])
         if len(ks) is 0:
-            raise MissingInstrument("No instruments loaded.")
+            raise x.MissingInstrument("No instruments loaded.")
         else:
             return None
 
@@ -82,10 +82,10 @@ class ContextHandler(ProtocolHandler):
         attached to the protocol.
         """
         if axis is None:
-            raise MissingData("Axis must be specified.")
+            raise x.DataMissing("Axis must be specified.")
         axis = axis.upper()
         if axis not in self._instruments:
-            raise MissingInstrument(
+            raise x.InstrumentMissing(
                 "Can't find instrument for axis {}.".format(axis)
             )
         return axis
@@ -97,7 +97,7 @@ class ContextHandler(ProtocolHandler):
         if axis is None:
             axis = self.get_only_instrument().axis
         if axis is None:
-            raise MissingData(
+            raise x.DataMissing(
                 "Calibration axis must be specified when multiple " +
                 "instruments are loaded."
             )
@@ -111,7 +111,7 @@ class ContextHandler(ProtocolHandler):
         if axis is None:
             instrument = self.get_only_instrument()
             if instrument is None:
-                raise MissingData(
+                raise x.DataMissing(
                     "Calibration axis must be specified when multiple " +
                     "instruments are loaded."
                 )
@@ -180,14 +180,14 @@ class ContextHandler(ProtocolHandler):
         name = 'tiprack.{}'.format(pipette.name)
         tiprack = self.find_container(name=name, has_tips=True)
         if tiprack is None:
-            raise MissingContainer("No tiprack found for {}.".format(name))
+            raise x.ContainerMissing("No tiprack found for {}.".format(name))
         tip = tiprack.get_next_tip()
         return self.get_coordinates(tip.address, axis=pipette.axis)
 
     def get_trash_coordinates(self, axis=None):
         trash = self.find_container(name='point.trash')
         if trash is None:
-            raise MissingContainer("No disposal point (trash) on deck.")
+            raise x.ContainerMissing("No disposal point (trash) on deck.")
         return self.get_coordinates(trash.address + [(0, 0)], axis)
 
     def get_volume(self, well):

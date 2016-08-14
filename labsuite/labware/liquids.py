@@ -1,4 +1,5 @@
 from labsuite.labware.grid import GridItem
+from labsuite.util import exceptions as x
 
 
 class LiquidInventory():
@@ -113,7 +114,7 @@ class LiquidInventory():
             raise ValueError("No maximum liquid amount set for well.")
         new_value = self.calculate_total_volume() + new_amount
         if (new_value > self.max_volume):
-            raise ValueError(
+            raise x.LiquidOverflow(
                 "Liquid amount ({}µl) exceeds max volume ({}µl)."
                 .format(new_value, self.max_volume)
             )
@@ -133,7 +134,7 @@ class LiquidInventory():
         Python doesn't support passing by reference. ;_;
         """
         if ml is None:
-            raise Exception("Keyword argument 'ml' is required.")
+            raise ValueError("Keyword argument 'ml' is required.")
         elif ml:
             return volume * 1000  # OMG metric <3 <3
         else:
@@ -142,11 +143,11 @@ class LiquidInventory():
     def get_volume(self, name=None):
         if name:
             if name not in self._contents:
-                raise KeyError(
+                raise x.LiquidMismatch(
                     "Liquid '{}' not in container.".format(name)
                 )
             if len(self._contents.keys()) > 1:
-                raise ValueError(
+                raise x.LiquidMismatch(
                     "Liquid '{}' is a component of a mixture.".format(name)
                 )
         return self.calculate_total_volume()
@@ -155,7 +156,7 @@ class LiquidInventory():
         if key in self._contents:
             return self._contents[key] / self.calculate_total_volume()
         else:
-            raise KeyError(
+            raise x.LiquidMismatch(
                 "Liquid '{}' not found in this container."
                 .format(key)
             )
@@ -170,7 +171,7 @@ class LiquidInventory():
         # request. (Don't worry about working volumes for now.)
         total_volume = self.calculate_total_volume()
         if (self._allow_liquid_debt is False and total_volume < amount):
-            raise ValueError(
+            raise x.LiquidUnavailable(
                 "Not enough liquid ({}µl) for transfer ({}µl)."
                 .format(total_volume, amount)
             )
@@ -179,7 +180,7 @@ class LiquidInventory():
             if name is None and self._allow_unspecified_liquids:
                 name = 'unspecified'
             if name is None:
-                raise Exception(
+                raise x.DataMissing(
                     "Liquid name required when liquid debt is enabled."
                 )
             destination.add_named_liquid(amount, name=name)
