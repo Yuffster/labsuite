@@ -384,3 +384,94 @@ class ProtocolTest(unittest.TestCase):
 
         with self.assertRaises(TypeError):
             p2 + p1
+
+    def test_protocol_addition(self):
+        p1 = Protocol()
+        p1.add_instrument('A', 'p10')
+        p1.add_container('A1', 'microplate.96')
+        p1.transfer('A1:A1', 'A1:A1', ul=10)
+
+        p2 = Protocol()
+        p1.add_instrument('A', 'p10')  # Same definition; no conflict.
+        p2.add_instrument('B', 'p20')  # New instrument.
+        p2.add_container('A1', 'microplate.96')  # No conflict.
+        p2.add_container('A2', 'microplate.96')  # New container.
+        p2.transfer('A1:A1', 'A1:A1', ul=12)
+        p2.transfer('A1:A1', 'A2:A2', ul=20)
+
+        p3 = Protocol()
+        p3.add_instrument('A', 'p10')
+        p3.add_instrument('B', 'p20')
+        p3.add_container('A1', 'microplate.96')
+        p3.add_container('A2', 'microplate.96')
+        p3.transfer('A1:A1', 'A1:A1', ul=10)
+        p3.transfer('A1:A1', 'A1:A1', ul=12)
+        p3.transfer('A1:A1', 'A2:A2', ul=20)
+
+        self.assertEqual(p3, p1 + p2)
+
+    def test_protocol_label_addition(self):
+        p1 = Protocol()
+        p1.add_instrument('A', 'p10')
+        p1.add_container('A1', 'microplate.96', label="Input")
+        p1.transfer('A1:A1', 'A1:A1', ul=10)
+
+        p2 = Protocol()
+        p2.add_instrument('A', 'p10')  # Same definition; no conflict.
+        p2.add_instrument('B', 'p20')  # New instrument.
+        p2.add_container('A1', 'microplate.96', label="Input")  # No conflict.
+        p2.add_container('A2', 'microplate.96')  # New container.
+        p2.transfer('A1:A1', 'A1:A1', ul=9)
+        p2.transfer('Input:A1', 'A2:A2', ul=20)
+
+        p3 = Protocol()
+        p3.add_instrument('A', 'p10')
+        p3.add_instrument('B', 'p20')
+        p3.add_container('A1', 'microplate.96', label="Input")
+        p3.add_container('A2', 'microplate.96')
+        p3.transfer('A1:A1', 'A1:A1', ul=10)
+        p3.transfer('A1:A1', 'A1:A1', ul=9)
+        p3.transfer('A1:A1', 'A2:A2', ul=20)
+
+        self.assertEqual(p3, p1 + p2)
+
+    def test_protocol_label_conflict(self):
+        p1 = Protocol()
+        p1.add_instrument('A', 'p10')
+        p1.add_container('A1', 'microplate.96', label="Input")
+        p1.transfer('A1:A1', 'A1:A1', ul=10)
+
+        p2 = Protocol()
+        p1.add_instrument('A', 'p10')  # Same definition; no conflict.
+        p2.add_instrument('B', 'p20')  # New instrument.
+        p2.add_container('A1', 'microplate.96', label="Output")  # Conflict.
+        p2.add_container('A2', 'microplate.96')  # New container.
+        p2.transfer('A1:A1', 'A1:A1', ul=12)
+        p2.transfer('Output:A1', 'A2:A2', ul=20)
+
+        with self.assertRaises(x.ContainerConflict):
+            p1 + p2
+
+    def test_protocol_addition_info(self):
+        p1 = Protocol()
+        p1.set_info(author="John Doe", name="Lorem Ipsum")
+
+        p2 = Protocol()
+        p2.set_info(author="Jane Doe")
+
+        p3 = p1 + p2
+
+        self.assertEqual('Jane Doe', p3.info['author'])
+        self.assertEqual('Lorem Ipsum', p3.info['name'])
+
+    def test_protocol_addition_container_conflict(self):
+        p1 = Protocol()
+        p1.add_instrument('A', 'p10')
+        p1.add_container('A1', 'microplate.96')
+        p1.transfer('A1:A1', 'A1:A2', ul=10)
+
+        p2 = Protocol()
+        p2.add_container('A1', 'tiprack.p20')
+
+        with self.assertRaises(x.ContainerConflict):
+            p1 + p2

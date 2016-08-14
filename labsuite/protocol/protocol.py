@@ -136,9 +136,72 @@ class Protocol():
         return self.hash == protocol.hash
 
     def __add__(self, b):
+        """
+        Combines one Protocol with another, attempting to combine instrument
+        and labware definitions as cleanly as possible.
+
+        Returns a newly instantiated Protocol instance.
+
+        If the Protocols are incompatible, it will raise a ProtocolConfict.
+        """
         if isinstance(b, PartialProtocol):
-            b.reapply(self)
-            return self
+            c = Protocol()
+            c.apply_protocol(self)
+            b.reapply(c)
+            return c
+        elif isinstance(b, type(self)):
+            c = Protocol()
+            c.apply_protocol(self)
+            c.apply_protocol(b)
+            return c
+        else:
+            raise TypeError("Invalid operand types for Protocol.")
+
+    def apply_protocol(self, b):
+        """
+        Applies all the operational data from another Protocol to this one.
+        """
+        # Second info supercedes first.
+        self.set_info(**b.info)
+        # Add the containers from second.
+        for slot, name in b._containers.items():
+            if slot in self._containers and self._containers[slot] != name:
+                raise x.ContainerConflict(
+                    "Slot {} already allocated to {}".format(slot, name)
+                )
+            if slot not in self._containers:
+                # Add container if it's not there already.
+                self.add_container(slot, name)
+        # Add the labels from second.
+        labels = {v: k for k, v in self._container_labels.items()}
+        for label, slot in b._container_labels.items():
+            if slot in labels and labels[slot] != label:
+                raise x.ContainerConflict(
+                    "Conflicting labels at {}: {} vs {}"
+                    .format(
+                        humanize_position(slot),
+                        labels[slot],
+                        label
+                    )
+                )
+            self._container_labels[label] = slot
+        # Supercede labelcase from second.
+        for label, case in b._label_case.items():
+            self._label_case[label] = case
+        # Add the instruments from second.
+        for axis, name in b._instruments.items():
+            if axis in self._instruments \
+            and self._instruments[axis] != name:
+                raise x.InstrumentConflict(
+                    "Axis {} already allocated to {}".format(axis, name)
+                )
+            self.add_instrument(axis, name)
+        # Rerun command definitions from second.
+        for command in b.actions:
+            c = copy.deepcopy(command)
+            # Make sure this command runs properly.
+            self.add_command(c.pop('command'), **c)
+            self.commands.append(command)
 
     def add_container(self, slot, name, label=None):
         slot = normalize_position(slot)
