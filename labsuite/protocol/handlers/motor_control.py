@@ -52,7 +52,7 @@ class MotorControlHandler(ProtocolHandler):
         pipette.reset()
 
     def pickup_tip(self, pipette):
-        coords = self._context.get_tip_coordinates(pipette)
+        coords = self._context.get_next_tip_coordinates(pipette)
         self.move_motors(x=coords['x'], y=coords['y'])
         self.move_motors(z=coords['top'])
 

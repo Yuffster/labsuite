@@ -176,7 +176,10 @@ class ContextHandler(ProtocolHandler):
             output['bottom'] = slot_cal['bottom']
         return output
 
-    def get_tip_coordinates(self, pipette):
+    def get_next_tip_coordinates(self, pipette):
+        """
+        Returns the next tip coordinates and decrements tip inventory.
+        """
         name = 'tiprack.{}'.format(pipette.name)
         tiprack = self.find_container(name=name, has_tips=True)
         if tiprack is None:

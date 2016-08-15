@@ -51,14 +51,14 @@ class ContextHandlerTest(unittest.TestCase):
         p200 = context.get_instrument(axis='A')
         p10 = context.get_instrument(axis='B')
 
-        c1 = context.get_tip_coordinates(p200)
+        c1 = context.get_next_tip_coordinates(p200)
         self.assertEqual(c1, {'x': 100, 'y': 150, 'top': 60, 'bottom': 0})
-        c2 = context.get_tip_coordinates(p200)  # Next tip.
+        c2 = context.get_next_tip_coordinates(p200)  # Next tip.
         self.assertEqual(c2, {'x': 100, 'y': 159, 'top': 60, 'bottom': 0})
 
-        c3 = context.get_tip_coordinates(p10)
+        c3 = context.get_next_tip_coordinates(p10)
         self.assertEqual(c3, {'x': 200, 'y': 250, 'top': 160, 'bottom': 0})
-        c4 = context.get_tip_coordinates(p10)  # Next tip.
+        c4 = context.get_next_tip_coordinates(p10)  # Next tip.
         self.assertEqual(c4, {'x': 200, 'y': 259, 'top': 160, 'bottom': 0})
 
     def test_tiprack_switch(self):
@@ -73,7 +73,7 @@ class ContextHandlerTest(unittest.TestCase):
         rack = context.find_container(name='tiprack.p200', has_tips=True)
         self.assertEqual([(0, 0)], rack.address)
         rack.set_tips_used(95)  # We've used all but one tip from this rack.
-        c1 = context.get_tip_coordinates(p200)  # Last tip.
+        c1 = context.get_next_tip_coordinates(p200)  # Last tip.
         h12 = [(0, 0), (7, 11)]
         self.assertEqual(c1, context.get_coordinates(h12, axis="A"))
         rack = context.find_container(name='tiprack.p200', has_tips=True)
