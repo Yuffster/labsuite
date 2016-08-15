@@ -296,7 +296,7 @@ def compile(*sequences, output=None):
 
     # TALS
     for start, end, volume in tals:
-        protocol.transfer((start, end, {'ul': volume}))
+        protocol.transfer(start, end, ul=volume)
 
     # Enzymes
     for start, end, volume in enzymes:
