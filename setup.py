@@ -11,8 +11,7 @@ config = {
         "labsuite": [
             "config/containers/**/*.yml",
             "config/containers/legacy_containers.json",
-            "compilers/data/*",
-            "compilers/templates/*"
+            "compilers/data/*"
         ]
     },
     'scripts': [
