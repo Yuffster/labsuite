@@ -9,7 +9,6 @@ class ContextHandlerTest(unittest.TestCase):
 
     def assertVolume(self, well, volume):
         result = self.protocol._context_handler.get_volume(well)
-        print(well, volume, result)
         self.assertEqual(volume, result)
 
     def test_transfer(self):
@@ -24,7 +23,7 @@ class ContextHandlerTest(unittest.TestCase):
         self.protocol.transfer('A1:A2', 'A1:A3', ul=20)
         self.assertVolume('A1:A3', 20)
         self.assertVolume('A1:A2', 80)
-
+        
         run = self.protocol.run()
         next(run)  # Yield to set progress.
         self.assertVolume('A1:A2', 0)
@@ -33,7 +32,40 @@ class ContextHandlerTest(unittest.TestCase):
         next(run)  # transfer('A1:A2', 'A1:A3', ul=20)
         self.assertVolume('A1:A3', 20)
         self.assertVolume('A1:A2', 80)
-        next(run)  # transfer('A1:A1', 'A1:A4', ul=120)
+
+    def test_distribute(self):
+        self.protocol.add_container('A1', 'microplate.96')
+        self.protocol.add_container('C1', 'tiprack.p200')
+        self.protocol.add_instrument('A', 'p200')
+        self.protocol.distribute(
+            'A1:A1',
+            ('A1:B1', 50),
+            ('A1:C1', 5),
+            ('A1:D1', 10)
+        )
+        # Final volumes.
+        self.assertVolume('A1:A1', -65)
+        self.assertVolume('A1:B1', 50)
+        self.assertVolume('A1:C1', 5)
+        self.assertVolume('A1:D1', 10)
+        
+        # Try during a run.
+        run = self.protocol.run()
+        next(run)  # Yield to set progress.
+        self.assertVolume('A1:A2', 0)
+        next(run)  # Our command.
+
+        # Final volumes
+        self.assertVolume('A1:A1', -65)
+        self.assertVolume('A1:B1', 50)
+        self.assertVolume('A1:C1', 5)
+        self.assertVolume('A1:D1', 10)
+
+    def test_consolidate(self):
+        pass
+
+    def test_transfer_group(self):
+        pass
 
     def test_find_instrument_by_volume(self):
         """ Find instrument by volume. """

@@ -207,8 +207,13 @@ class ContextHandler(ProtocolHandler):
     def transfer_group(self, *args, **kwargs):
         pass
 
-    def distribute(self, *args, **kwargs):
-        pass
+    def distribute(self, start, transfers=None, **kwargs):
+        start_slot, start_well = start
+        start = self._deck.slot(start_slot).get_child(start_well)
+        for c in transfers:
+            slot, well = c.get('end')
+            end = self._deck.slot(slot).get_child(well)
+            start.transfer(c.get('volume'), end)
 
     def mix(self, *args, **kwargs):
         pass
