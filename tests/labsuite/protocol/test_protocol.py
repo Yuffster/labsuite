@@ -167,11 +167,12 @@ class ProtocolTest(unittest.TestCase):
 
     def test_consolidate(self):
         """ Consolidate. """
+        self.protocol.add_container('A1', 'microplate.96')
         self.protocol.consolidate(
             'A1:A1',
-            ('B1:B1', 50),
-            ('C1:C1', 5),
-            ('D1:D1', 10)
+            ('A1:B1', 50),
+            ('A1:C1', 5),
+            ('A1:D1', 10)
         )
         expected = [{
             'command': 'consolidate',
@@ -181,15 +182,15 @@ class ProtocolTest(unittest.TestCase):
             'transfers': [
                 {
                     'volume': 50,
-                    'start': ((1, 0), (1, 0)),  # B1:B1
+                    'start': ((0, 0), (1, 0)),  # A1:B1
                 },
                 {
                     'volume': 5,
-                    'start': ((2, 0), (2, 0)),  # C1:C1
+                    'start': ((0, 0), (2, 0)),  # A1:C1
                 },
                 {
                     'volume': 10,
-                    'start': ((3, 0), (3, 0))  # D1:D1
+                    'start': ((0, 0), (3, 0))  # A1:D1
                 }
             ]
         }]

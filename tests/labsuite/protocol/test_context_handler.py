@@ -62,7 +62,17 @@ class ContextHandlerTest(unittest.TestCase):
         self.assertVolume('A1:D1', 10)
 
     def test_consolidate(self):
-        pass
+        self.protocol.add_container('A1', 'microplate.96')
+        self.protocol.consolidate(
+            'A1:A1',
+            ('A1:B1', 50),
+            ('A1:C1', 5),
+            ('A1:D1', 10)
+        )
+        self.assertVolume('A1:A1', 65)
+        self.assertVolume('A1:B1', -50)
+        self.assertVolume('A1:C1', -5)
+        self.assertVolume('A1:D1', -10)
 
     def test_transfer_group(self):
         self.protocol.add_container('A1', 'microplate.96')

@@ -208,7 +208,7 @@ class ContextHandler(ProtocolHandler):
         for t in transfers:
             self.transfer(t['start'], t['end'], t['volume'])
 
-    def distribute(self, start, transfers=None, **kwargs):
+    def distribute(self, start, transfers, **kwargs):
         start_slot, start_well = start
         start = self._deck.slot(start_slot).get_child(start_well)
         for c in transfers:
@@ -216,8 +216,13 @@ class ContextHandler(ProtocolHandler):
             end = self._deck.slot(slot).get_child(well)
             start.transfer(c.get('volume'), end)
 
-    def mix(self, *args, **kwargs):
-        pass
+    def consolidate(self, end, transfers, **kwargs):
+        end_slot, end_well = end
+        end = self._deck.slot(end_slot).get_child(end_well)
+        for c in transfers:
+            slot, well = c.get('start')
+            start = self._deck.slot(slot).get_child(well)
+            start.transfer(c.get('volume'), end)
 
-    def consolidate(self, *args, **kwargs):
+    def mix(self, *args, **kwargs):
         pass
