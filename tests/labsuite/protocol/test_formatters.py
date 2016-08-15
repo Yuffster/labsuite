@@ -26,16 +26,18 @@ class ProtocolFormatterTest(unittest.TestCase):
                 "name": "p10"
             }
         },
-        "deck": {
-            "A1": {
+        "containers": [
+            {
                 "name": "microplate.96",
-                "label": "Ingredients"
+                "label": "Ingredients",
+                "slot": "A1"
             },
-            "B1": {
+            {
                 "name": "microplate.96",
-                "label": "Output"
+                "label": "Output",
+                "slot": "B1"
             }
-        },
+        ],
         "instructions": [
             {
                 "command": "transfer",

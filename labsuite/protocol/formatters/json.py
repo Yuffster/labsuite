@@ -20,6 +20,7 @@ class JSONFormatter(ProtocolFormatter):
             v = i.pop(key, None)
             if v is not None:
                 info[key] = v
+
         instruments = OrderedDict()
         for axis, name in sorted(self._protocol.instruments.items()):
             label = "{}_{}".format(name, axis.lower())
@@ -27,21 +28,26 @@ class JSONFormatter(ProtocolFormatter):
                 ('axis', axis),
                 ('name', name)
             ])
-        modules = OrderedDict()
+
+        modules = []
         for slot, name in sorted(self._protocol._containers.items()):
             c = OrderedDict([('name', name)])
-            modules[humanize_position(slot)] = c
             label = self._protocol.get_container_label(slot)
             if label:
                 c['label'] = label
+            if slot:
+                c['slot'] = humanize_position(slot)
+            modules.append(c)
+
         instructions = []
         for command in self._protocol.commands:
             command = self._translate_command(command)
             instructions.append(command)
+
         out = OrderedDict()
         out['info'] = info
         out['instruments'] = instruments
-        out['deck'] = modules
+        out['containers'] = modules
         out['instructions'] = instructions
         return json.dumps(out, indent=4)
 
@@ -100,7 +106,7 @@ class JSONLoader():
         data = json.loads(json_str)
         self._protocol = Protocol()
         self._load_info(data['info'])
-        self._load_deck(data['deck'])
+        self._load_containers(data['containers'])
         self._load_instruments(data['instruments'])
         self._load_instructions(data['instructions'])
 
@@ -111,10 +117,13 @@ class JSONLoader():
         for k, inst in instruments.items():
             self._protocol.add_instrument(inst['axis'], inst['name'])
 
-    def _load_deck(self, deck):
-        for slot, mod in deck.items():
+    def _load_containers(self, deck):
+        for container in deck:
+            name = container.get('name', None)
+            label = container.get('label', None)
+            slot = container.get('slot', None)
             self._protocol.add_container(
-                slot, mod['name'], label=mod.get('label', None)
+                slot, name, label=label
             )
 
     def _load_instructions(self, instructions):
