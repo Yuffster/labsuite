@@ -46,7 +46,7 @@ class Protocol():
         self._containers = {}
         self._commands = []
         self._handlers = []
-        self._initialize_context()
+        self._context_handler = self.initialize_context()
 
     def set_info(self, name=None, description=None, created=None,
                  updated=None, author=None, version=None, **kwargs):
@@ -447,7 +447,8 @@ class Protocol():
         index and the number of total commands.
         """
         self.validate("Can't run an incomplete PartialProtocol.")
-        self._initialize_context()
+        # Reset our local context.
+        self._context_handler = self.initialize_context()
         i = 0
         yield(0, len(self._commands))
         while i < len(self._commands):
@@ -464,20 +465,21 @@ class Protocol():
         for _ in self.run():
             pass
 
-    def _initialize_context(self):
+    def initialize_context(self):
         """
         Initializes the context.
         """
         calibration = None
         if self._context_handler:
             calibration = self._context_handler._calibration
-        self._context_handler = ContextHandler(self)
+        ch = ContextHandler(self)
         for slot, name in self._containers.items():
-            self._context_handler.add_container(slot, name)
+            ch.add_container(slot, name)
         for axis, name in self._instruments.items():
-            self._context_handler.add_instrument(axis, name)
+            ch.add_instrument(axis, name)
         if calibration:
-            self._context_handler._calibration = calibration
+            ch._calibration = calibration
+        return ch
 
     def _run_in_context_handler(self, command, **kwargs):
         """
