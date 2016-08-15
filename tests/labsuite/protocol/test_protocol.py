@@ -88,35 +88,35 @@ class ProtocolTest(unittest.TestCase):
                 {
                     'volume': 15,
                     'start': ((0, 0), (0, 0)),  # A1:A1
-                    'end': ((1, 0), (1, 0)),  # B1:B1
+                    'end': ((0, 0), (1, 0)),  # A1:B1
                     'blowout': True,
                     'touchtip': True
                 },
                 {
                     'volume': 1000,
-                    'start': ((0, 1), (0, 1)),  # A2:A2
-                    'end': ((1, 1), (1, 1)),  # B2:B2
+                    'start': ((0, 0), (0, 1)),  # A1:A2
+                    'end': ((0, 0), (1, 1)),  # A1:B2
                     'blowout': True,
                     'touchtip': True
                 },
                 {
                     'volume': 12,
-                    'start': ((0, 2), (0, 2)),  # A3:A3
-                    'end': ((1, 2), (1, 2)),  # B3:B3
+                    'start': ((0, 0), (0, 2)),  # A1:A3
+                    'end': ((0, 0), (1, 2)),  # A1:B3
                     'blowout': False,
                     'touchtip': True
                 },
                 {
                     'volume': 12,
-                    'start': ((0, 3), (0, 3)),  # A4:A4
-                    'end': ((1, 3), (1, 3)),  # B4:B4
+                    'start': ((0, 0), (0, 3)),  # A1:A4
+                    'end': ((0, 0), (1, 3)),  # A1:B4
                     'blowout': True,
                     'touchtip': True
                 },
                 {
                     'volume': 12,
-                    'start': ((0, 0), (0, 4)),  # label:A5
-                    'end': ((1, 4), (2, 0)),  # B5:C1
+                    'start': ((0, 0), (0, 4)),  # A1:A5
+                    'end': ((0, 0), (1, 4)),  # A1:B5
                     'blowout': True,
                     'touchtip': True
                 }
@@ -124,22 +124,24 @@ class ProtocolTest(unittest.TestCase):
         }]
         self.protocol.add_container('A1', 'microplate.96', label="Label")
         self.protocol.transfer_group(
-            ('A1:A1', 'B1:B1', {'ul': 15}),
-            ('A2:A2', 'B2:B2', {'ml': 1}),
-            ('A3:A3', 'B3:B3', {'blowout': False}),
-            ('A4:A4', 'B4:B4'),
-            ('Label:A5', 'B5:C1'),
+            ('A1:A1', 'A1:B1', {'ul': 15}),
+            ('A1:A2', 'A1:B2', {'ml': 1}),
+            ('A1:A3', 'A1:B3', {'blowout': False}),
+            ('A1:A4', 'A1:B4'),
+            ('A1:A5', 'A1:B5'),
             ul=12,
             tool='p10'
         )
         self.assertEqual(self.instructions, expected)
 
     def test_distribute(self):
+        self.protocol.add_instrument('A', 'p200')
+        self.protocol.add_container('A1', 'microplate.96')
         self.protocol.distribute(
             'A1:A1',
-            ('B1:B1', 50),
-            ('C1:C1', 5),
-            ('D1:D1', 10)
+            ('A1:B1', 50),
+            ('A1:C1', 5),
+            ('A1:D1', 10)
         )
         expected = [{
             'command': 'distribute',
@@ -149,15 +151,15 @@ class ProtocolTest(unittest.TestCase):
             'transfers': [
                 {
                     'volume': 50,
-                    'end': ((1, 0), (1, 0)),  # B1:B1
+                    'end': ((0, 0), (1, 0)),  # A1:B1
                 },
                 {
                     'volume': 5,
-                    'end': ((2, 0), (2, 0)),  # C1:C1
+                    'end': ((0, 0), (2, 0)),  # A1:C1
                 },
                 {
                     'volume': 10,
-                    'end': ((3, 0), (3, 0))  # D1:D1
+                    'end': ((0, 0), (3, 0))  # A1:D1
                 }
             ]
         }]

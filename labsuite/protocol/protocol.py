@@ -296,7 +296,7 @@ class Protocol():
             })
         self.add_command(
             'transfer_group',
-            tool=options['tool'],
+            tool=options.get('tool', None),
             transfers=transfers
         )
 

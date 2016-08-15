@@ -204,8 +204,9 @@ class ContextHandler(ProtocolHandler):
         end = self._deck.slot(end_slot).get_child(end_well)
         start.transfer(volume, end)
 
-    def transfer_group(self, *args, **kwargs):
-        pass
+    def transfer_group(self, transfers=None, **kwargs):
+        for t in transfers:
+            self.transfer(t['start'], t['end'], t['volume'])
 
     def distribute(self, start, transfers=None, **kwargs):
         start_slot, start_well = start
