@@ -25,7 +25,8 @@ import re
 import json
 import datetime
 
-from collections import OrderedDict
+from labsuite.protocol import Protocol
+from labsuite.protocol.formatters import JSONFormatter
 
 from .plate_map import PlateMap
 
@@ -166,61 +167,6 @@ def get_plasmid_wells(sequence, receiver='pC'):
     return well_locs
 
 
-def _make_transfer_group(*transfers, reuse_tip=False):
-    """
-    Takes a bunch of trasfer tuples (start, end, volume) and returns a
-    transfer group formatted for the OT-One protocol.
-
-    If group is set to True, the transfers will be done with a single
-    tip. Good when you're moving one particular mixture, bad when you're
-    mixing different things because it contaminates the tips.
-    """
-    if reuse_tip:
-        group = {"transfer": []}
-        for t in transfers:
-            group["transfer"].append(_make_transfer(*t))
-    else:
-        group = []
-        for t in transfers:
-            group.append({"transfer": [_make_transfer(*t)]})
-
-    return group
-
-
-def _make_transfer(start, end, volume, touch=True):
-    """
-    Creates a new transfer object for injection into an instruction group
-    within the OpenTrons JSON Protocol format.
-
-    Start and end are strings in <Plate Name>:<Well> format, for example
-    `Ingredients:A1`. You can have spaces in the name.
-
-    We're not doing any normalizing or validation on this yet; be careful!
-    """
-
-    try:
-        fplate, fwell = start.split(':')
-        tplate, twell = end.split(':')
-    except ValueError:
-        raise ValueError(
-            "Start and end must be in <plate>:<well> format (Plate:A1)."
-        )
-
-    return OrderedDict([
-        ("from", OrderedDict([
-            ("container", fplate),
-            ("location", fwell)
-        ])),
-        ("to", OrderedDict([
-            ("container", tplate),
-            ("location", twell),
-            ("touch-tip", touch)
-        ])),
-        ("volume", volume),
-        ("blowout", True)
-    ])
-
-
 def _get_tal_transfers(sequence, well='A1', receiver='pC'):
     """
     Creates an array of transfer arguments for a TAL sequence.
@@ -318,24 +264,47 @@ def compile(*sequences, output=None):
     for well in sorted(well_map):
         output_map.append("{}: {}".format(well, well_map[well]))
 
+    protocol = Protocol()
+    protocol.set_info(
+        name="FusX Transfer",
+        created=str(datetime.date.today()),
+        description="; ".join(output_map)
+    )
+    protocol.add_instrument('A', 'p10')
+    protocol.add_instrument('B', 'p200')
+    protocol.add_container('A1', 'tuberack.15-50ml', label='Ingredients')
+    protocol.add_container('E1', 'microplate.96', label='Fusx Output')
+    protocol.add_container('A2', 'point.trash')
+    protocol.add_container('E3', 'microplate.96') # Cool deck.
+    protocol.add_container('B2', 'tiprack.p10')
+    protocol.add_container('B1', 'tiprack.p10')
+    protocol.add_container('B3', 'tiprack.p10')
+    protocol.add_container('C1', 'microplate.96', label='TALE1')
+    protocol.add_container('D1', 'microplate.96', label='TALE2')
+    protocol.add_container('C2', 'microplate.96', label='TALE3')
+    protocol.add_container('D2', 'microplate.96', label='TALE4')
+    protocol.add_container('C3', 'microplate.96', label='TALE5')
+
     # Take our three transfer groups and make them into a consolidated
     # transfer list.
-    instructions = []
-    instructions.append(_make_transfer_group(*buffers, reuse_tip=True))
-    instructions += _make_transfer_group(*tals)
-    instructions += _make_transfer_group(*enzymes)
 
-    # Open up our template and inject the transfers.
-    with open(os.path.dirname(__file__) + '/templates/pfusx.json') as data:
-        protocol = json.JSONDecoder(
-            object_pairs_hook=OrderedDict
-        ).decode(data.read())
+    # Buffers
+    group = []
+    for start, end, volume in buffers:
+        group.append((start, end, {'ul': volume}))
+    protocol.transfer_group(*group, tool="p10")
 
-    protocol['instructions'][0]['groups'] = instructions
-    protocol['info']['create-date'] = str(datetime.date.today())
-    protocol['info']['description'] = "; ".join(output_map)
+    # TALS
+    group = []
+    for start, end, volume in tals:
+        group.append((start, end, {'ul': volume}))
+    protocol.transfer_group(*group, tool="p10")
 
-    compiled = json.dumps(protocol, indent=4)
+    # Enzymes
+    for start, end, volume in enzymes:
+        protocol.transfer(start, end, ul=volume)
+
+    compiled = protocol.export(JSONFormatter)
 
     if output:
         with open(output, 'w') as f:
