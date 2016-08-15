@@ -195,13 +195,13 @@ class ContextHandler(ProtocolHandler):
 
     def get_volume(self, well):
         slot, well = self._protocol._normalize_address(well)
-        return self._deck.slot(slot).well(well).get_volume()
+        return self._deck.slot(slot).get_child(well).get_volume()
 
     def transfer(self, start=None, end=None, volume=None, **kwargs):
         start_slot, start_well = start
         end_slot, end_well = end
-        start = self._deck.slot(start_slot).well(start_well)
-        end = self._deck.slot(end_slot).well(end_well)
+        start = self._deck.slot(start_slot).get_child(start_well)
+        end = self._deck.slot(end_slot).get_child(end_well)
         start.transfer(volume, end)
 
     def transfer_group(self, *args, **kwargs):
