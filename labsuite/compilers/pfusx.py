@@ -295,10 +295,8 @@ def compile(*sequences, output=None):
     protocol.transfer_group(*group, tool="p10")
 
     # TALS
-    group = []
     for start, end, volume in tals:
-        group.append((start, end, {'ul': volume}))
-    protocol.transfer_group(*group, tool="p10")
+        protocol.transfer((start, end, {'ul': volume}))
 
     # Enzymes
     for start, end, volume in enzymes:
