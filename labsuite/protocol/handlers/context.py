@@ -224,5 +224,8 @@ class ContextHandler(ProtocolHandler):
             start = self._deck.slot(slot).get_child(well)
             start.transfer(c.get('volume'), end)
 
-    def mix(self, *args, **kwargs):
-        pass
+    def mix(self, start=None, reps=None, tool=None, volume=None, **kwargs):
+        slot, well = start
+        start = self._deck.slot(slot).get_child(well)
+        for i in range(reps):
+            start.transfer(volume, start)
