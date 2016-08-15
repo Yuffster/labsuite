@@ -401,8 +401,8 @@ class Protocol():
             # Try to find the slot as a label.
             container = container.lower()
             if container not in self._container_labels:
-                raise x.MissingContainer(
-                    "Container not found: {}".format(container)
+                raise x.ContainerMissing(
+                    "Container not found: {}".format(address)
                 )
             container = self._container_labels[container]
 

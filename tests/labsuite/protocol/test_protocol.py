@@ -392,7 +392,7 @@ class ProtocolTest(unittest.TestCase):
         p1.transfer('A1:A1', 'A1:A1', ul=10)
 
         p2 = Protocol()
-        p1.add_instrument('A', 'p10')  # Same definition; no conflict.
+        p2.add_instrument('A', 'p10')  # Same definition; no conflict.
         p2.add_instrument('B', 'p20')  # New instrument.
         p2.add_container('A1', 'microplate.96')  # No conflict.
         p2.add_container('A2', 'microplate.96')  # New container.
@@ -435,14 +435,14 @@ class ProtocolTest(unittest.TestCase):
 
         self.assertEqual(p3, p1 + p2)
 
-    def test_protocol_label_conflict(self):
+    def test_protocol_addition_label_conflict(self):
         p1 = Protocol()
         p1.add_instrument('A', 'p10')
         p1.add_container('A1', 'microplate.96', label="Input")
         p1.transfer('A1:A1', 'A1:A1', ul=10)
 
         p2 = Protocol()
-        p1.add_instrument('A', 'p10')  # Same definition; no conflict.
+        p2.add_instrument('A', 'p10')  # Same definition; no conflict.
         p2.add_instrument('B', 'p20')  # New instrument.
         p2.add_container('A1', 'microplate.96', label="Output")  # Conflict.
         p2.add_container('A2', 'microplate.96')  # New container.
@@ -451,6 +451,21 @@ class ProtocolTest(unittest.TestCase):
 
         with self.assertRaises(x.ContainerConflict):
             p1 + p2
+
+    def test_protocol_addition_label_case(self):
+        p1 = Protocol()
+        p1.add_instrument('A', 'p10')
+        p1.add_container('A1', 'microplate.96', label="Input")
+
+        p2 = Protocol()
+        p2.add_instrument('A', 'p10')
+        p2.add_container('A1', 'microplate.96', label="INPUT")
+
+        p3 = Protocol()
+        p3.add_instrument('A', 'p10')
+        p3.add_container('A1', 'microplate.96', label="INPUT")
+
+        self.assertEqual((p1 + p2), p3)
 
     def test_protocol_addition_info(self):
         p1 = Protocol()
