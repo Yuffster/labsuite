@@ -41,12 +41,25 @@ protocol.transfer('A1:A2', 'A1:A3', ul=80)
 
 ### Partial Protocols
 
-Partial Protocols are are a decorator around normal Protocols which pass
-through access and automatically suppress and ProtocolExceptions raised
-by Protocol operations, such as ones due to missing containers.
+As a Protocol is defined, the ContextHandler runs a virtualized instance
+of the robot in the background to ensure that every method called can
+validly run within the virtual context.
 
-When a Partial Protocol is run, exported, or combined with another
-Protocol, each call will be replayed on a full-fledged Protocol object.
+If a particular call is invalid, a ProtocolException will be thrown,
+detailing on a user level how to correct the problem.
+
+However, sometimes it might be desirable to create a Protocol without
+worrying about these errors until later.
+
+Partial Protocols are a decorator around normal Protocols which act as
+a proxy and wrap all calls to the inner Protocol to temporarily suppress
+any ProtocolExceptions raised by Protocol methods.
+
+When a Partial Protocol is run or exported, it will be checked for any of
+these errors.  
+
+When combined with another Protocol, each call will be reapplied to the new
+Protocol instance.
 
 ```python
 # Container and instrument definitions
