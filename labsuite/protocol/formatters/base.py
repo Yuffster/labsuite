@@ -1,5 +1,4 @@
 # Copyright 2016 Michelle Steigerwalt
-# License: Apache 2.0
 
 from labsuite.protocol import Protocol
 
