@@ -39,9 +39,162 @@ protocol.transfer('A1:A1', 'A1:A2', ul=100)
 protocol.transfer('A1:A2', 'A1:A3', ul=80)
 ```
 
+### Partial Protocols
+
+Partial Protocols can be used to defer 
+
+```python
+# Container and instrument definitions
+p1 = Protocol()
+p1.add_instrument("p10")
+p1.add_container("A1", "microplate.96")
+
+# No error, even though the container doesn't exist.
+p2 = Protocol.partial()
+p2.transfer('A1:A1', 'A1:A2')
+p2.transfer('A1:A1', 'A1:A3')
+
+# Combine the two Protocols into a third.
+p3 = (p1 + p2)
+```
+
+### Protocol Combination
+
+As seen above Protocols support the `+` operator, and can take either a
+Protocol or a ParitalProtocol.  If a PartialProtocol cannot operate in
+the newly created context, an exception will be thrown.
+
+Adding `p1 + p2` will leave both inputs untouched and return a newly
+created instance which combines both.
+
+### Protocol Comparison
+
+Each Protocol has a `hash` property which returns a hash of the normalized
+operational data of the Protocol (definitions, instruments, commands, etc).
+
+There is also support for an equality operator, meaning that you can
+determine whether or not two Protocols are equal by using `==`.
+
+```python
+p1 = Protocol()
+p1.add_instrument("p10")
+p1.add_container("A1", "microplate.96")
+
+p2 = Protocol.partial()
+p2.transfer('A1:A1', 'A1:A2')
+p2.transfer('A1:A1', 'A1:A3')
+
+p3 = Protocol()
+p3.add_instrument("p10")
+p3.add_container("A1", "microplate.96")
+p3 = Protocol.partial()
+p3.transfer('A1:A1', 'A1:A2')
+p3.transfer('A1:A1', 'A1:A3')
+
+(p3 == p1 + p2)  # True
+```
+
+### Protocol Output
+
+Protocols can be output as JSON data structures.  Importing a previously
+saved JSON structure will load an exact replica of the exported Protocol.
+
+#### Input Python
+
+```python
+protocol = Protocol()
+protocol.set_info(
+    name="Test Protocol",
+    description="A protocol to test JSON output.",
+    author="Michelle Steigerwalt",
+    created="Thu Aug 11 20:19:55 2016"
+}
+protocol.add_instrument('A', 'p10')
+protocol.add_container('A1', 'microplate.96', label="Ingredients")
+protocol.add_container('B1', 'microplate.96', label="Output")
+protocol.transfer('A1:A1', 'B1:B1', ul=10, tool='p10')
+protocol.transfer_group(
+    ('A1:A3', 'B1:B3', {'ul': 3}),
+    ('INGREDIENTS:A4', 'B1:B4'),
+    ('A1:A5', 'B1:C1'),
+    tool='p10',
+    ul=10
+)
+protocol.export(JSONFormatter)
+```
+
+#### Output JSON
+
+```json
+{
+  "info": {
+    "name": "Test Protocol",
+    "author": "Michelle Steigerwalt",
+    "description": "A protocol to test JSON output.",
+    "created": "Thu Aug 11 20:19:55 2016",
+  },
+  "instruments": {
+    "p10_a": {
+      "axis": "A",
+      "name": "p10"
+    }
+  },
+  "containers": [
+    {
+      "name": "microplate.96",
+      "label": "Ingredients",
+      "slot": "A1"
+    },
+    {
+      "name": "microplate.96",
+      "label": "Output",
+      "slot": "B1"
+    }
+  ],
+  "instructions": [
+    {
+      "command": "transfer",
+      "start": "Ingredients:A1",
+      "end": "Output:B1",
+      "volume": 10,
+      "tool": "p10",
+      "blowout": true,
+      "touchtip": true
+    },
+    {
+      "command": "transfer_group",
+      "tool": "p10",
+      "transfers": [
+        {
+          "start": "Ingredients:A3",
+          "end": "Output:B3",
+          "volume": 3,
+          "blowout": true,
+          "touchtip": true
+        },
+        {
+          "start": "Ingredients:A4",
+          "end": "Output:B4",
+          "volume": 10,
+          "blowout": true,
+          "touchtip": true
+        },
+        {
+          "start": "Ingredients:A5",
+          "end": "Output:C1",
+          "volume": 10,
+          "blowout": true,
+          "touchtip": true
+        }
+      ]
+    }
+  ]
+}
+```
+
 ### Running on the Robot
 
-To run a protocol on the OT-One machine, provide calibration data and then
+To run a protocol on a CNC machine, provide calibration data and then
 attach the Protocol class to the serial port connected to the robot.
 
 `Protocol.run` is a generator that will yield the current progress and total
