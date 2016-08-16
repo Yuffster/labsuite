@@ -221,14 +221,20 @@ class ProtocolTest(unittest.TestCase):
                 {
                     'volume': 50,
                     'end': ((0, 0), (1, 0)),  # A1:B1
+                    'blowout': True,
+                    'touchtip': True
                 },
                 {
                     'volume': 20,  # Default
                     'end': ((0, 0), (2, 0)),  # A1:C1
+                    'blowout': True,
+                    'touchtip': True
                 },
                 {
                     'volume': 30,
-                    'end': ((0, 0), (3, 0))  # A1:D1
+                    'end': ((0, 0), (3, 0)),  # A1:D1
+                    'blowout': True,
+                    'touchtip': True
                 }
             ]
         }]
@@ -285,14 +291,20 @@ class ProtocolTest(unittest.TestCase):
                 {
                     'volume': 50,
                     'start': ((0, 0), (1, 0)),  # A1:B1
+                    'blowout': True,
+                    'touchtip': True
                 },
                 {
                     'volume': 25,
                     'start': ((0, 0), (2, 0)),  # A1:C1
+                    'blowout': True,
+                    'touchtip': True
                 },
                 {
                     'volume': 30,
-                    'start': ((0, 0), (3, 0))  # A1:D1
+                    'start': ((0, 0), (3, 0)), # A1:D1
+                    'blowout': True,
+                    'touchtip': True
                 }
             ]
         }]

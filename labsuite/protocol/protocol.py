@@ -256,39 +256,11 @@ class Protocol():
         )
 
     def transfer_group(self, *wells, tool=None, **defaults):
-        defaults.update({
-            'touchtip': True,
-            'blowout': True
-        })
-        volume = self._normalize_volume(
-            defaults.pop('ul', None),
-            defaults.pop('ml', None),
-            skip_raise=True
+        transfers, min_vol, max_vol = self._make_transfer_group(
+            wells, ['start', 'end'], defaults
         )
-        transfers = []
-        vols = []
-        for item in wells:
-            options = defaults.copy()
-            if len(item) is 3:
-                start, end, opts = item
-                options.update(opts)
-            else:
-                start, end = item
-            vol = self._normalize_volume(
-                options.get('ul', None),
-                options.get('ml', None),
-                volume
-            )
-            vols.append(vol)
-            transfers.append({
-                'volume': vol,
-                'start': self._normalize_address(start),
-                'end': self._normalize_address(end),
-                'blowout': options['blowout'],
-                'touchtip': options['touchtip']
-            })
         tool = self.get_tool(
-            name=tool, min_vol=min(vols), max_vol=max(vols)
+            name=tool, min_vol=min_vol, max_vol=max_vol
         )
         self.add_command(
             'transfer_group',
@@ -297,36 +269,11 @@ class Protocol():
         )
 
     def distribute(self, start, *wells, tool=None, **defaults):
-        defaults.update({
-            'touchtip': True,
-            'blowout': True
-        })
-        volume = self._normalize_volume(
-            defaults.pop('ul', None),
-            defaults.pop('ml', None),
-            skip_raise=True
+        transfers, min_vol, max_vol = self._make_transfer_group(
+            wells, ['end'], defaults
         )
-        vols = []
-        transfers = []
-        for item in wells:
-            options = defaults.copy()
-            if len(item) is 2:
-                end, opts = item
-                options.update(opts)
-            else:
-                end = item
-            vol = self._normalize_volume(
-                options.get('ul', None),
-                options.get('ml', None),
-                volume
-            )
-            vols.append(vol)
-            transfers.append({
-                'volume': vol,
-                'end': self._normalize_address(end)
-            })
         tool = self.get_tool(
-            name=tool, min_vol=min(vols), max_vol=max(vols)
+            name=tool, min_vol=min_vol, max_vol=max_vol
         )
         self.add_command(
             'distribute',
@@ -336,37 +283,15 @@ class Protocol():
         )
 
     def consolidate(self, end, *wells, tool=None, **defaults):
-        defaults.update({
-            'touchtip': True,
-            'blowout': True
-        })
         volume = self._normalize_volume(
             defaults.pop('ul', None),
             defaults.pop('ml', None),
             skip_raise=True
         )
-        transfers = []
-        vols = []
-        for item in wells:
-            options = defaults.copy()
-            if len(item) is 2:
-                start, opts = item
-                options.update(opts)
-            else:
-                start = item
-            ul = options.get('ul', None)
-            ml = options.get('ml', None)
-            vol = self._normalize_volume(
-                options.get('ul', None),
-                options.get('ml', None),
-                volume
-            )
-            vols.append(vol)
-            transfers.append({
-                'volume': vol,
-                'start': self._normalize_address(start)
-            })
-        tool = self.get_tool(name=tool, min_vol=min(vols), max_vol=max(vols))
+        transfers, min_vol, max_vol = self._make_transfer_group(
+            wells, ['start'], defaults
+        )
+        tool = self.get_tool(name=tool, min_vol=min_vol, max_vol=max_vol)
         self.add_command(
             'consolidate',
             tool=tool.name,
@@ -386,6 +311,48 @@ class Protocol():
             volume=volume,
             reps=repetitions
         )
+
+    def _make_transfer_group(self, wells, arg_names, defaults):
+        vols = []
+        transfers = []
+        volume = self._normalize_volume(
+            defaults.pop('ul', None),
+            defaults.pop('ml', None),
+            skip_raise=True
+        )
+        vols = []
+        for item in wells:
+            # If it's not a tuple, there's only one arg and it has no options.
+            if type(item) == tuple:
+                item = list(item)
+            else:
+                item = [item]
+            options = {
+                'blowout': defaults.pop('blowout', True),
+                'touchtip': defaults.pop('touchtip', True)
+            }
+            options.update(defaults)
+            t = {}
+            # Grab each argument from the argument tuple.
+            for arg_name in arg_names:
+                if len(item) == 0:
+                    raise ValueError("Missing argument: {}".format(arg_name))
+                v = item.pop(0)
+                if arg_name in ['start', 'end']:
+                    v = self._normalize_address(v)
+                t[arg_name] = v
+            if len(item) == 1:
+                options.update(item.pop(0))
+            vol = self._normalize_volume(
+                options.pop('ul', None),
+                options.pop('ml', None),
+                volume
+            )
+            t['volume'] = vol
+            t.update(options)
+            transfers.append(t)
+            vols.append(vol)
+        return transfers, min(vols), max(vols)
 
     @property
     def actions(self):
