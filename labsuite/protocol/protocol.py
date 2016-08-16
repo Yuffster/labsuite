@@ -283,11 +283,6 @@ class Protocol():
         )
 
     def consolidate(self, end, *wells, tool=None, **defaults):
-        volume = self._normalize_volume(
-            defaults.pop('ul', None),
-            defaults.pop('ml', None),
-            skip_raise=True
-        )
         transfers, min_vol, max_vol = self._make_transfer_group(
             wells, ['start'], defaults
         )
@@ -300,7 +295,7 @@ class Protocol():
         )
 
     def mix(self, start, ml=None, ul=None, repetitions=None, tool=None,
-        blowout=True):
+        blowout=True, touchtip=True):
         volume = self._normalize_volume(ul, ml)
         tool = self.get_tool(name=tool, volume=volume)
         self.add_command(
@@ -308,6 +303,7 @@ class Protocol():
             tool=tool.name,
             start=self._normalize_address(start),
             blowout=blowout,
+            touchtip=touchtip,
             volume=volume,
             reps=repetitions
         )

@@ -53,7 +53,7 @@ class JSONFormatter(ProtocolFormatter):
     def _translate_command(self, command):
         command = copy.deepcopy(command)
         name = command['command']
-        method = getattr(self, "_translate_{}".format(name), None)
+        method = getattr(self, "_translate_{}_command".format(name), None)
         d = self._translate_any_command(command)
         if method:
             return method(d)
@@ -73,22 +73,19 @@ class JSONFormatter(ProtocolFormatter):
             v = command.pop(key, None)
             if v is not None:
                 d[key] = v
+        transfers = command.pop('transfers', None)
         for k, v in command.items():
             d[k] = v
+        if transfers:
+            ts = []
+            for t in transfers:
+                ts.append(self._translate_any_command(t))
+            d['transfers'] = ts
         return d
 
-    def _translate_transfer_group(self, command):
-        transfers = []
-        for t in command.pop('transfers'):
-            transfers.append(self._translate_any_command(t))
-        o = OrderedDict([
-            ('command', command.pop('command')),
-            ('tool', command.pop('tool'))
-        ])
-        for k, v in sorted(command.items()):
-            o[k] = v
-        o['transfers'] = transfers
-        return o
+    def _translate_mix_command(self, command):
+        command['repetitions'] = command.pop('reps')
+        return command
 
     def convert(self, content):
         """
@@ -140,6 +137,12 @@ class JSONLoader():
         end = inst.pop('end')
         self._protocol.transfer(start, end, **inst)
 
+    def _load_mix_command(self, inst):
+        volume = inst.pop('volume', None)
+        inst['ul'] = volume
+        start = inst.pop('start')
+        self._protocol.mix(start, **inst)
+
     def _load_transfer_group_command(self, inst):
         transfers = []
         for t in inst.pop('transfers'):
@@ -148,6 +151,22 @@ class JSONLoader():
             t['ul'] = t.pop('volume')
             transfers.append((start, end, t))
         self._protocol.transfer_group(*transfers, tool=inst['tool'])
+
+    def _load_consolidate_command(self, inst):
+        transfers = []
+        for t in inst.pop('transfers'):
+            start = t.pop('start')
+            t['ul'] = t.pop('volume')
+            transfers.append((start, t))
+        self._protocol.consolidate(inst['end'], *transfers, tool=inst['tool'])
+
+    def _load_distribute_command(self, inst):
+        transfers = []
+        for t in inst.pop('transfers'):
+            start = t.pop('end')
+            t['ul'] = t.pop('volume')
+            transfers.append((start, t))
+        self._protocol.distribute(inst['start'], *transfers, tool=inst['tool'])
 
     @property
     def protocol(self):

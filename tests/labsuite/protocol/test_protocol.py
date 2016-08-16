@@ -281,7 +281,8 @@ class ProtocolTest(unittest.TestCase):
             'A1:A1',
             ('A1:B1', {'ul': 50}),
             ('A1:C1', {'ul': 25}),
-            ('A1:D1', {'ul': 30})
+            ('A1:D1'),
+            ul=30
         )
         expected = [{
             'command': 'consolidate',
@@ -352,6 +353,7 @@ class ProtocolTest(unittest.TestCase):
             'tool': 'p200',
             'start': ((0, 0), (0, 0)),  # A1:A1
             'blowout': True,
+            'touchtip': True,
             'volume': 50,
             'reps': 10
         }]

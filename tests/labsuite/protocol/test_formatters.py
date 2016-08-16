@@ -10,6 +10,8 @@ from labsuite.util import exceptions as x
 
 class ProtocolFormatterTest(unittest.TestCase):
 
+    maxDiff = None
+
     json = """
     {
         "info": {
@@ -23,6 +25,10 @@ class ProtocolFormatterTest(unittest.TestCase):
             "p10_a": {
                 "axis": "A",
                 "name": "p10"
+            },
+            "p200_b": {
+                "axis": "B",
+                "name": "p200"
             }
         },
         "containers": [
@@ -73,6 +79,65 @@ class ProtocolFormatterTest(unittest.TestCase):
                         "touchtip": true
                     }
                 ]
+            },
+            {
+                "command": "consolidate",
+                "tool": "p10",
+                "end": "Output:B3",
+                "transfers": [
+                    {
+                        "start": "Ingredients:A3",
+                        "volume": 3,
+                        "blowout": true,
+                        "touchtip": true
+                    },
+                    {
+                        "start": "Ingredients:A4",
+                        "volume": 10,
+                        "blowout": true,
+                        "touchtip": true
+                    },
+                    {
+                        "start": "Ingredients:A5",
+                        "volume": 10,
+                        "blowout": true,
+                        "touchtip": true
+                    }
+                ]
+            },
+            {
+                "command": "distribute",
+                "tool": "p10",
+                "start": "Ingredients:A1",
+                "transfers": [
+                    {
+                        "end": "Output:A1",
+                        "volume": 3,
+                        "blowout": true,
+                        "touchtip": true
+                    },
+                    {
+                        "end": "Output:A2",
+                        "volume": 10,
+                        "blowout": true,
+                        "touchtip": true
+                    },
+                    {
+                        "end": "Output:A3",
+                        "volume": 10,
+                        "blowout": true,
+                        "touchtip": true
+                    }
+                ]
+            },
+            {
+                "command": "mix",
+                "start": "Output:A1",
+                "volume": 50,
+                "tool": "p200",
+                "repetitions": 30,
+                "blowout": true,
+                "touchtip": true
             }
         ]
     }
@@ -89,6 +154,7 @@ class ProtocolFormatterTest(unittest.TestCase):
         # Same definitions as the protocol JSON above.
         self.protocol.set_info(**self.stub_info)
         self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_instrument('B', 'p200')
         self.protocol.add_container('A1', 'microplate.96', label="Ingredients")
         self.protocol.add_container('B1', 'microplate.96', label="Output")
         self.protocol.transfer('A1:A1', 'B1:B1', ul=10, tool='p10')
@@ -99,6 +165,23 @@ class ProtocolFormatterTest(unittest.TestCase):
             tool='p10',
             ul=10
         )
+        self.protocol.consolidate(
+            'Output:B3',
+            ('A1:A3', {'ul': 3}),
+            'INGREDIENTS:A4',
+            'A1:A5',
+            tool='p10',
+            ul=10
+        )
+        self.protocol.distribute(
+            'Ingredients:A1',
+            ('Output:A1', {'ul': 3}),
+            'Output:A2',
+            'Output:A3',
+            tool='p10',
+            ul=10
+        )
+        self.protocol.mix('Output:A1', ul=50, repetitions=30)
 
     def test_json_export(self):
         result = json.loads(self.protocol.export(JSONFormatter))
