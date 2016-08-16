@@ -39,15 +39,15 @@ class ContextHandlerTest(unittest.TestCase):
         self.protocol.add_instrument('A', 'p200')
         self.protocol.distribute(
             'A1:A1',
-            ('A1:B1', 50),
-            ('A1:C1', 5),
-            ('A1:D1', 10)
+            ('A1:B1', {'ul': 50}),
+            ('A1:C1', {'ul': 30}),
+            ('A1:D1', {'ul': 40})
         )
         # Final volumes.
-        self.assertVolume('A1:A1', -65)
+        self.assertVolume('A1:A1', -120)
         self.assertVolume('A1:B1', 50)
-        self.assertVolume('A1:C1', 5)
-        self.assertVolume('A1:D1', 10)
+        self.assertVolume('A1:C1', 30)
+        self.assertVolume('A1:D1', 40)
         
         # Try during a run.
         run = self.protocol.run()
@@ -56,23 +56,24 @@ class ContextHandlerTest(unittest.TestCase):
         next(run)  # Our command.
 
         # Final volumes
-        self.assertVolume('A1:A1', -65)
+        self.assertVolume('A1:A1', -120)
         self.assertVolume('A1:B1', 50)
-        self.assertVolume('A1:C1', 5)
-        self.assertVolume('A1:D1', 10)
+        self.assertVolume('A1:C1', 30)
+        self.assertVolume('A1:D1', 40)
 
     def test_consolidate(self):
         self.protocol.add_container('A1', 'microplate.96')
+        self.protocol.add_instrument('A', 'p200')
         self.protocol.consolidate(
             'A1:A1',
-            ('A1:B1', 50),
-            ('A1:C1', 5),
-            ('A1:D1', 10)
+            ('A1:B1', {'ul': 50}),
+            ('A1:C1', {'ul': 30}),
+            ('A1:D1', {'ul': 40})
         )
-        self.assertVolume('A1:A1', 65)
+        self.assertVolume('A1:A1', 120)
         self.assertVolume('A1:B1', -50)
-        self.assertVolume('A1:C1', -5)
-        self.assertVolume('A1:D1', -10)
+        self.assertVolume('A1:C1', -30)
+        self.assertVolume('A1:D1', -40)
 
     def test_transfer_group(self):
         self.protocol.add_container('A1', 'microplate.96')
@@ -80,14 +81,14 @@ class ContextHandlerTest(unittest.TestCase):
         self.protocol.add_instrument('A', 'p200')
         self.protocol.transfer_group(
             ('A1:A1', 'A1:B1', {'ul': 50}),
-            ('A1:A1', 'A1:C1', {'ul': 5}),
-            ('A1:A1', 'A1:D1', {'ul': 10}),
+            ('A1:A1', 'A1:C1', {'ul': 50}),
+            ('A1:A1', 'A1:D1', {'ul': 30}),
             tool='p200'
         )
-        self.assertVolume('A1:A1', -65)
+        self.assertVolume('A1:A1', -130)
         self.assertVolume('A1:B1', 50)
-        self.assertVolume('A1:C1', 5)
-        self.assertVolume('A1:D1', 10)
+        self.assertVolume('A1:C1', 50)
+        self.assertVolume('A1:D1', 30)
 
     def test_find_instrument_by_volume(self):
         """ Find instrument by volume. """

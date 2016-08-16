@@ -244,36 +244,29 @@ class Protocol():
     def transfer(self, start, end, ul=None, ml=None,
                  blowout=True, touchtip=True, tool=None):
         volume = self._normalize_volume(ul, ml)
-        if tool is None:
-            inst = self._context_handler.get_instrument(volume=volume)
-            if inst is None:
-                raise x.InstrumentMissing(
-                    "No instrument found to handle volume of {}"
-                    .format(volume)
-                )
-            tool = inst.name
-
+        tool = self.get_tool(volume=volume, name=tool)
         self.add_command(
             'transfer',
             volume=volume,
-            tool=tool,
+            tool=tool.name,
             start=self._normalize_address(start),
             end=self._normalize_address(end),
             blowout=blowout,
             touchtip=touchtip
         )
 
-    def transfer_group(self, *wells, ul=None, ml=None, **defaults):
-        if ul or ml:
-            volume = self._normalize_volume(ul, ml)
-        else:
-            volume = None
+    def transfer_group(self, *wells, tool=None, **defaults):
         defaults.update({
             'touchtip': True,
-            'blowout': True,
-            'volume': volume
+            'blowout': True
         })
+        volume = self._normalize_volume(
+            defaults.pop('ul', None),
+            defaults.pop('ml', None),
+            skip_raise=True
+        )
         transfers = []
+        vols = []
         for item in wells:
             options = defaults.copy()
             if len(item) is 3:
@@ -281,12 +274,12 @@ class Protocol():
                 options.update(opts)
             else:
                 start, end = item
-            ul = options.get('ul', None)
-            ml = options.get('ml', None)
-            if ul or ml:
-                vol = self._normalize_volume(ul, ml)
-            else:
-                vol = volume
+            vol = self._normalize_volume(
+                options.get('ul', None),
+                options.get('ml', None),
+                volume
+            )
+            vols.append(vol)
             transfers.append({
                 'volume': vol,
                 'start': self._normalize_address(start),
@@ -294,48 +287,100 @@ class Protocol():
                 'blowout': options['blowout'],
                 'touchtip': options['touchtip']
             })
+        tool = self.get_tool(
+            name=tool, min_vol=min(vols), max_vol=max(vols)
+        )
         self.add_command(
             'transfer_group',
-            tool=options.get('tool', None),
+            tool=tool.name,
             transfers=transfers
         )
 
-    def distribute(self, start, *wells, blowout=True):
+    def distribute(self, start, *wells, tool=None, **defaults):
+        defaults.update({
+            'touchtip': True,
+            'blowout': True
+        })
+        volume = self._normalize_volume(
+            defaults.pop('ul', None),
+            defaults.pop('ml', None),
+            skip_raise=True
+        )
+        vols = []
         transfers = []
         for item in wells:
-            end, volume = item
+            options = defaults.copy()
+            if len(item) is 2:
+                end, opts = item
+                options.update(opts)
+            else:
+                end = item
+            vol = self._normalize_volume(
+                options.get('ul', None),
+                options.get('ml', None),
+                volume
+            )
+            vols.append(vol)
             transfers.append({
-                'volume': volume,
+                'volume': vol,
                 'end': self._normalize_address(end)
             })
+        tool = self.get_tool(
+            name=tool, min_vol=min(vols), max_vol=max(vols)
+        )
         self.add_command(
             'distribute',
-            tool='p10',
+            tool=tool.name,
             start=self._normalize_address(start),
-            blowout=blowout,
             transfers=transfers
         )
 
-    def consolidate(self, end, *wells, blowout=True):
+    def consolidate(self, end, *wells, tool=None, **defaults):
+        defaults.update({
+            'touchtip': True,
+            'blowout': True
+        })
+        volume = self._normalize_volume(
+            defaults.pop('ul', None),
+            defaults.pop('ml', None),
+            skip_raise=True
+        )
         transfers = []
+        vols = []
         for item in wells:
-            start, volume = item
+            options = defaults.copy()
+            if len(item) is 2:
+                start, opts = item
+                options.update(opts)
+            else:
+                start = item
+            ul = options.get('ul', None)
+            ml = options.get('ml', None)
+            vol = self._normalize_volume(
+                options.get('ul', None),
+                options.get('ml', None),
+                volume
+            )
+            vols.append(vol)
             transfers.append({
-                'volume': volume,
+                'volume': vol,
                 'start': self._normalize_address(start)
             })
+        tool = self.get_tool(name=tool, min_vol=min(vols), max_vol=max(vols))
         self.add_command(
             'consolidate',
-            tool='p10',
+            tool=tool.name,
             end=self._normalize_address(end),
-            blowout=blowout,
             transfers=transfers
         )
 
-    def mix(self, start, volume=None, repetitions=None, blowout=True):
+    def mix(self, start, ml=None, ul=None, repetitions=None, tool=None,
+        blowout=True):
+        volume = self._normalize_volume(ul, ml)
+        tool = self.get_tool(name=tool, volume=volume)
         self.add_command(
             'mix',
-            tool='p10',
+            tool=tool.name,
             start=self._normalize_address(start),
             blowout=blowout,
             volume=volume,
@@ -368,16 +413,19 @@ class Protocol():
 
         return self._deck[slot]
 
-    def _normalize_volume(self, ul, ml):
-        if ul is None and ml is None:
-            raise ValueError("Volume must be provided as either ul or ml.")
-        if ul is 0 or ml is 0:
+    def _normalize_volume(self, ul, ml, default=None, skip_raise=False):
+        if ul is 0 or ml is 0 or default is 0:
             raise ValueError("Volume must exceed 0.")
         if (ul and ml) and ml * 1000 != ul:
             raise ValueError("Conflicting volumes for ml and ul.")
         if ul:
             return ul
-        return ml * 1000
+        if ml:
+            return ml * 1000
+        if default:
+            return default
+        if skip_raise is False:
+            raise ValueError("No volume provided.")
 
     def _normalize_address(self, address):
         """
@@ -440,6 +488,15 @@ class Protocol():
             if pos == position:
                 return self._label_case[label]
         return None
+
+    def get_tool(self, **kwargs):
+        tool = self._context_handler.get_instrument(**kwargs)
+        if tool is None:
+            raise x.InstrumentMissing(
+                "No instrument found with parameters: {}"
+                .format({k: v for k, v in kwargs.items() if v is not None})
+            )
+        return tool
 
     def run(self):
         """

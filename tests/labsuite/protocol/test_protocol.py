@@ -7,6 +7,7 @@ class ProtocolTest(unittest.TestCase):
 
     def setUp(self):
         self.protocol = Protocol()
+        self.maxDiff = None
 
     @property
     def instructions(self):
@@ -50,7 +51,7 @@ class ProtocolTest(unittest.TestCase):
         self.protocol.transfer('A1:A1', 'B1:B1', ul=100, tool='p20')
         expected = [{
             'command': 'transfer',
-            'tool': 'p20',
+            'tool': 'p200',
             'volume': 100,
             'start': ((0, 0), (0, 0)),
             'end': ((1, 0), (1, 0)),
@@ -60,12 +61,13 @@ class ProtocolTest(unittest.TestCase):
         self.assertEqual(self.instructions, expected)
 
     def test_transfer_without_pipette(self):
-        self.protocol.add_instrument('A', 'p200')
         self.protocol.add_container('A1', 'microplate.96')
         with self.assertRaises(x.InstrumentMissing):
             self.protocol.transfer('A1:A1', 'A1:A2', ul=10)
 
     def test_transfer_without_volume(self):
+        self.protocol.add_instrument('A', 'p200')
+        self.protocol.add_container('A1', 'microplate.96')
         with self.assertRaises(ValueError):
             self.protocol.transfer("A1:A1", "A1:A1")
 
@@ -83,7 +85,7 @@ class ProtocolTest(unittest.TestCase):
         """ Transfer group. """
         expected = [{
             'command': 'transfer_group',
-            'tool': 'p10',
+            'tool': 'p20',
             'transfers': [
                 {
                     'volume': 15,
@@ -93,7 +95,7 @@ class ProtocolTest(unittest.TestCase):
                     'touchtip': True
                 },
                 {
-                    'volume': 1000,
+                    'volume': 10,
                     'start': ((0, 0), (0, 1)),  # A1:A2
                     'end': ((0, 0), (1, 1)),  # A1:B2
                     'blowout': True,
@@ -123,30 +125,97 @@ class ProtocolTest(unittest.TestCase):
             ]
         }]
         self.protocol.add_container('A1', 'microplate.96', label="Label")
+        self.protocol.add_instrument('A', 'p20')
         self.protocol.transfer_group(
             ('A1:A1', 'A1:B1', {'ul': 15}),
-            ('A1:A2', 'A1:B2', {'ml': 1}),
+            ('A1:A2', 'A1:B2', {'ul': 10}),
             ('A1:A3', 'A1:B3', {'blowout': False}),
             ('A1:A4', 'A1:B4'),
             ('A1:A5', 'A1:B5'),
             ul=12,
-            tool='p10'
+            tool='p20'
         )
         self.assertEqual(self.instructions, expected)
+
+    def test_transfer_group_without_pipette(self):
+        self.protocol.add_instrument('A', 'p200')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(x.InstrumentMissing):
+            self.protocol.transfer_group(
+                ('A1:A1', 'A1:B1', {'ul': 15}),
+                ('A1:A2', 'A1:B2', {'ml': 1}),
+                ('A1:A3', 'A1:B3', {'blowout': False}),
+                ('A1:A4', 'A1:B4'),
+                ('A1:A5', 'A1:B5'),
+                ul=12,
+                tool='p10'
+            )
+
+    def test_transfer_group_without_volume(self):
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(ValueError):
+            self.protocol.add_instrument('A', 'p10')
+            self.protocol.transfer_group(
+                ('A1:A1', 'A1:B1'),
+                ('A1:A2', 'A1:B2'),
+                ('A1:A3', 'A1:B3', {'blowout': False}),
+                ('A1:A4', 'A1:B4'),
+                ('A1:A5', 'A1:B5'),
+                tool='p10'
+            )
+
+    def test_transfer_group_zero_volume(self):
+        self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(ValueError):
+            self.protocol.transfer_group(
+                ('A1:A1', 'A1:B1'),
+                ('A1:A2', 'A1:B2'),
+                ('A1:A3', 'A1:B3', {'blowout': False}),
+                ('A1:A4', 'A1:B4'),
+                ('A1:A5', 'A1:B5'),
+                ul=0,
+                tool='p10'
+            )
+        with self.assertRaises(ValueError):
+            self.protocol.transfer_group(
+                ('A1:A1', 'A1:B1'),
+                ('A1:A2', 'A1:B2'),
+                ('A1:A3', 'A1:B3', {'blowout': False}),
+                ('A1:A4', 'A1:B4'),
+                ('A1:A5', 'A1:B5'),
+                ml=0,
+                tool='p10'
+            )
+
+    def test_transfer_group_conflicting_volume(self):
+        self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(ValueError):
+            self.protocol.transfer_group(
+                ('A1:A1', 'A1:B1'),
+                ('A1:A2', 'A1:B2'),
+                ('A1:A3', 'A1:B3', {'blowout': False}),
+                ('A1:A4', 'A1:B4'),
+                ('A1:A5', 'A1:B5'),
+                ul=5,
+                ml=4,
+                tool='p10'
+            )
 
     def test_distribute(self):
         self.protocol.add_instrument('A', 'p200')
         self.protocol.add_container('A1', 'microplate.96')
         self.protocol.distribute(
             'A1:A1',
-            ('A1:B1', 50),
-            ('A1:C1', 5),
-            ('A1:D1', 10)
+            ('A1:B1', {'ul': 50}),
+            ('A1:C1'),
+            ('A1:D1', {'ul': 30}),
+            ul=20
         )
         expected = [{
             'command': 'distribute',
-            'tool': 'p10',
-            'blowout': True,
+            'tool': 'p200',
             'start': ((0, 0), (0, 0)),
             'transfers': [
                 {
@@ -154,30 +223,63 @@ class ProtocolTest(unittest.TestCase):
                     'end': ((0, 0), (1, 0)),  # A1:B1
                 },
                 {
-                    'volume': 5,
+                    'volume': 20,  # Default
                     'end': ((0, 0), (2, 0)),  # A1:C1
                 },
                 {
-                    'volume': 10,
+                    'volume': 30,
                     'end': ((0, 0), (3, 0))  # A1:D1
                 }
             ]
         }]
         self.assertEqual(self.instructions, expected)
 
+    def test_distribute_without_pipette(self):
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(x.InstrumentMissing):
+            self.protocol.distribute(
+                'A1:A1',
+                ('A1:B1', {'ul': 50}),
+                ('A1:C1', {'ul': 5}),
+                ('A1:D1', {'ul': 10})
+            )
+
+    def test_distribute_zero_volume(self):
+        self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(ValueError):
+            self.protocol.distribute(
+                'A1:A1',
+                ('A1:B1', {'ul': 4}),
+                ('A1:C1', {'ul': 5}),
+                ('A1:D1', {'ul': 0})
+            )
+
+    def test_distribute_conflicting_volume(self):
+        self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(ValueError):
+            self.protocol.distribute(
+                'A1:A1',
+                ('A1:B1'),
+                ('A1:C1'),
+                ('A1:D1', {'ul': 10, 'ml': 5}),
+                ul=5
+            )
+
     def test_consolidate(self):
         """ Consolidate. """
         self.protocol.add_container('A1', 'microplate.96')
+        self.protocol.add_instrument('A', 'p200')
         self.protocol.consolidate(
             'A1:A1',
-            ('A1:B1', 50),
-            ('A1:C1', 5),
-            ('A1:D1', 10)
+            ('A1:B1', {'ul': 50}),
+            ('A1:C1', {'ul': 25}),
+            ('A1:D1', {'ul': 30})
         )
         expected = [{
             'command': 'consolidate',
-            'tool': 'p10',
-            'blowout': True,
+            'tool': 'p200',
             'end': ((0, 0), (0, 0)),
             'transfers': [
                 {
@@ -185,33 +287,88 @@ class ProtocolTest(unittest.TestCase):
                     'start': ((0, 0), (1, 0)),  # A1:B1
                 },
                 {
-                    'volume': 5,
+                    'volume': 25,
                     'start': ((0, 0), (2, 0)),  # A1:C1
                 },
                 {
-                    'volume': 10,
+                    'volume': 30,
                     'start': ((0, 0), (3, 0))  # A1:D1
                 }
             ]
         }]
         self.assertEqual(self.instructions, expected)
 
+    def test_consolidate_without_pipette(self):
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(x.InstrumentMissing):
+            self.protocol.consolidate(
+                'A1:A1',
+                ('A1:B1', {'ul': 50}),
+                ('A1:C1', {'ul': 5}),
+                ('A1:D1', {'ul': 10})
+            )
+
+    def test_consolidate_zero_volume(self):
+        self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(ValueError):
+            self.protocol.consolidate(
+                'A1:A1',
+                ('A1:B1', {'ul': 4}),
+                ('A1:C1', {'ul': 5}),
+                ('A1:D1', {'ul': 0})
+            )
+
+    def test_consolidate_conflicting_volume(self):
+        self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(ValueError):
+            self.protocol.consolidate(
+                'A1:A1',
+                ('A1:B1', {'ul': 5}),
+                ('A1:C1', {'ul': 5}),
+                ('A1:D1', {'ul': 10, 'ml': 5})
+            )
+
     def test_mix(self):
         """ Mix. """
-        self.protocol.mix(
-            'A1:A1',
-            volume=50,
-            repetitions=10
-        )
+        self.protocol.add_container('A1', 'microplate.96')
+        self.protocol.add_instrument('A', 'p200')
+        self.protocol.mix('A1:A1', ul=50, repetitions=10)
         expected = [{
             'command': 'mix',
-            'tool': 'p10',
+            'tool': 'p200',
             'start': ((0, 0), (0, 0)),  # A1:A1
             'blowout': True,
             'volume': 50,
             'reps': 10
         }]
         self.assertEqual(self.instructions, expected)
+
+    def test_mix_without_pipette(self):
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(x.InstrumentMissing):
+            self.protocol.mix('A1:A1', ul=50, repetitions=10, tool='p200')
+
+    def test_mix_without_volume(self):
+        self.protocol.add_container('A1', 'microplate.96')
+        self.protocol.add_instrument('A', 'p10')
+        with self.assertRaises(ValueError):
+            self.protocol.mix('A1:A1', repetitions=10, tool='p10')
+
+    def test_mix_zero_volume(self):
+        self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(ValueError):
+            self.protocol.mix('A1:A1', ul=0, repetitions=10, tool='p10')
+        with self.assertRaises(ValueError):
+            self.protocol.mix('A1:A1', ml=0, repetitions=10, tool='p10')
+
+    def test_mix_conflicting_volume(self):
+        self.protocol.add_instrument('A', 'p10')
+        self.protocol.add_container('A1', 'microplate.96')
+        with self.assertRaises(ValueError):
+            self.protocol.mix('A1:A1', ul=1, ml=1, repetitions=10, tool='p10')
 
     def test_protocol_run_twice(self):
         """ Run a protocol twice without error. """
@@ -254,7 +411,6 @@ class ProtocolTest(unittest.TestCase):
 
         # No longer identical.
         self.assertNotEqual(p1, p2)
-
 
     def test_protocol_version(self):
         # Set up a protocol.

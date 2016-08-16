@@ -31,7 +31,7 @@ class ContextHandler(ProtocolHandler):
         self._instruments[axis] = pipettes.load_instrument(name)
         self._instruments[axis]._axis = axis
 
-    def get_instrument(self, axis=None, **kwargs):
+    def get_instrument(self, axis=None, name=None, **kwargs):
         if axis is not None:
             axis = self.normalize_axis(axis)
             if axis not in self._instruments:
@@ -46,10 +46,16 @@ class ContextHandler(ProtocolHandler):
                         inst.calibrate(**self._calibration[axis]['_axis'])
                 return self._instruments[axis]
         volume = kwargs.pop('volume', None)
+        min_vol = kwargs.pop('min_vol', None)
+        max_vol = kwargs.pop('max_vol', None)
         for k, i in sorted(self._instruments.items()):
             match = True
             if volume and i.supports_volume(volume) is False:
-                    continue
+                continue
+            if min_vol and i.supports_volume(min_vol) is False:
+                continue
+            if max_vol and i.supports_volume(max_vol) is False:
+                continue
             for j, v in kwargs.items():
                 if getattr(i, j) != v:
                     match = False
