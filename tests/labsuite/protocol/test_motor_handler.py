@@ -103,3 +103,33 @@ class MotorHandlerTest(unittest.TestCase):
         with self.assertRaises(x.InstrumentMissing):
             m = self.protocol.attach_motor()
             m.get_pipette(volume=1000)
+
+    def test_no_errors_from_commands(self):
+        self.protocol.add_instrument('B', 'p200')
+        self.protocol.add_container('A1', 'microplate.96')
+        self.protocol.add_container('B1', 'tiprack.p200')
+        self.protocol.add_container('C1', 'point.trash')
+        self.protocol.calibrate('A1', x=1, y=2, top=3, bottom=13)
+        self.protocol.calibrate_instrument('B', top=0, blowout=10, droptip=25)
+        self.protocol.transfer('A1:A1', 'A1:A2', ul=100)
+        self.protocol.transfer_group(
+            ('A1:A1', 'A1:A2', {'ul': 100})
+        )
+        self.protocol.consolidate(
+            'A1:A1',
+            ('A1:A2', {'ul':100}),
+            ('A1:A2', {'ul':150})
+        )
+        self.protocol.distribute(
+            'A1:A1',
+            ('A1:A2', {'ul':100}),
+            ('A1:A2', {'ul':150})
+        )
+        self.protocol.mix('A1:A2', ul=100, repetitions=5)
+        motor = self.protocol.attach_motor()
+        output_log = motor._driver
+        movements = output_log.movements
+
+        # We're not really testing anything except that it runs without
+        # errors.
+        self.protocol.run_all()

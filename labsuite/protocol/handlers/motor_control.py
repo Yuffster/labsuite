@@ -37,7 +37,7 @@ class MotorControlHandler(ProtocolHandler):
         self.move_volume(tool, start, end, volume)
         self.dispose_tip(tool)
 
-    def transfer_group(self, transfers=None, tool=None, **kwargs):
+    def transfer_group(self, transfers=None, tool=None, volume=None, **kwargs):
         tool = self.get_pipette(name=tool, volume=volume)
         self.pickup_tip(tool)
         for t in transfers:
@@ -50,7 +50,7 @@ class MotorControlHandler(ProtocolHandler):
                 start=start,
                 end=t.pop('end'),
                 tool=tool,
-                volume=t.pop('volume')
+                volume=t.pop('volume'),
                 **t
             )
 
