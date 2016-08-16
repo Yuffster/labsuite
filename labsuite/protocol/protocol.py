@@ -469,6 +469,8 @@ class Protocol():
         self.validate("Can't run an incomplete PartialProtocol.")
         # Reset our local context.
         self._context_handler = self.initialize_context()
+        for h in self._handlers:
+            h.set_context(self._context_handler)
         i = 0
         yield(0, len(self._commands))
         while i < len(self._commands):
@@ -489,16 +491,26 @@ class Protocol():
         """
         Initializes the context.
         """
-        calibration = None
         if self._context_handler:
             calibration = self._context_handler._calibration
+            instruments = self._context_handler._instruments
+        else:
+            calibration = None
+            instruments = None
+
         ch = ContextHandler(self)
+        # Containers
         for slot, name in self._containers.items():
             ch.add_container(slot, name)
+        # Instruments
         for axis, name in self._instruments.items():
             ch.add_instrument(axis, name)
+        # calibration
         if calibration:
             ch._calibration = calibration
+        # pipette calibration
+        if instruments:
+            ch._instruments = instruments
         return ch
 
     def _run_in_context_handler(self, command, **kwargs):

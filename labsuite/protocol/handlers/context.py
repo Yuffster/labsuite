@@ -1,5 +1,6 @@
 from labsuite.protocol.handlers import ProtocolHandler
 from labsuite.labware import deck, pipettes
+from labsuite.labware.grid import humanize_position
 from labsuite.util import exceptions as x
 
 
@@ -103,7 +104,7 @@ class ContextHandler(ProtocolHandler):
         if axis is None:
             axis = self.get_only_instrument().axis
         if axis is None:
-            raise x.DataMissing(
+            raise x.CalibrationMissing(
                 "Calibration axis must be specified when multiple " +
                 "instruments are loaded."
             )
@@ -159,6 +160,10 @@ class ContextHandler(ProtocolHandler):
         """ Returns the calibrated coordinates for a position. """
         cal = self.get_axis_calibration(axis)
         slot, well = position
+        if slot not in cal:
+            raise x.CalibrationMissing(
+                "No calibration for {}".format(humanize_position(slot))
+            )
         defaults = ({'top': 0, 'bottom': 0, 'x': 0, 'y': 0})
         output = {}
         # Calibration for A1 in this container (x, y, top, bottom).

@@ -21,6 +21,11 @@ class DataMissing(ProtocolException):
 	context to complete a call.
 	"""
 
+class CalibrationMissing(ProtocolException):
+	"""
+	Thrown when Calibration data is missing.
+	"""
+
 class ProtocolConflict(ProtocolException):
 	"""
 	Raised when a Protocol definition conflicts with another in the same

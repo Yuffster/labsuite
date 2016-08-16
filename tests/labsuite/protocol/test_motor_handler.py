@@ -80,11 +80,11 @@ class MotorHandlerTest(unittest.TestCase):
         self.protocol.attach_motor()
         self.protocol.add_instrument('B', 'p200')
         self.protocol.add_container('A1', 'microplate.96')
+        self.protocol.calibrate('A1', top=0, bottom=0)
         self.protocol.calibrate_instrument('B', top=0, blowout=10)
         self.protocol.transfer('A1:A1', 'A1:A2', ul=100)
         with self.assertRaises(x.ContainerMissing):
-            for progress in self.protocol.run():
-                continue
+            self.protocol.run_all()
 
     def test_transfer_without_dispose_point(self):
         """ Raise when no dispose point set. """
@@ -92,12 +92,14 @@ class MotorHandlerTest(unittest.TestCase):
         self.protocol.add_instrument('B', 'p200')
         self.protocol.add_container('A1', 'microplate.96')
         self.protocol.add_container('C1', 'tiprack.p200')
+        self.protocol.calibrate('A1')
+        self.protocol.calibrate('C1')
         self.protocol.calibrate_instrument('B', top=0, blowout=10)
         self.protocol.transfer('A1:A1', 'A1:A2', ul=100)
         self.protocol.transfer('A1:A2', 'A1:A3', ul=80)
+
         with self.assertRaises(x.ContainerMissing):
-            for progress in self.protocol.run():
-                continue
+            self.protocol.run_all()
 
     def test_instrument_missing(self):
         with self.assertRaises(x.InstrumentMissing):
@@ -109,6 +111,9 @@ class MotorHandlerTest(unittest.TestCase):
         self.protocol.add_container('A1', 'microplate.96')
         self.protocol.add_container('B1', 'tiprack.p200')
         self.protocol.add_container('C1', 'point.trash')
+        self.protocol.calibrate('A1')
+        self.protocol.calibrate('B1')
+        self.protocol.calibrate('C1')
         self.protocol.calibrate('A1', x=1, y=2, top=3, bottom=13)
         self.protocol.calibrate_instrument('B', top=0, blowout=10, droptip=25)
         self.protocol.transfer('A1:A1', 'A1:A2', ul=100)

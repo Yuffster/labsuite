@@ -20,6 +20,12 @@ class ProtocolHandler():
         self._protocol = protocol
         self.setup()
 
+    def set_context(self, context):
+        """
+        Mostly used for when the context is reinitialized from the outside.
+        """
+        self._context = context
+
     def setup(self):
         """
         Whatever setup you need to do for your context, do it here.

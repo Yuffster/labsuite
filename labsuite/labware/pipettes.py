@@ -1,5 +1,5 @@
 import sys
-
+from labsuite.util import exceptions as x
 
 def load_instrument(name):
     return getattr(
@@ -71,7 +71,7 @@ class Pipette():
         these calculations to work.
         """
         if self._blowout is None or self._top is None:
-            raise ValueError(
+            raise x.CalibrationMissing(
                 "Pipette {} not calibrated.".format(self.axis)
             )
         percent = self._volume_percentage(volume)
