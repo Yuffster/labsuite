@@ -41,7 +41,12 @@ protocol.transfer('A1:A2', 'A1:A3', ul=80)
 
 ### Partial Protocols
 
-Partial Protocols can be used to defer 
+Partial Protocols are are a decorator around normal Protocols which pass
+through access and automatically suppress and ProtocolExceptions raised
+by Protocol operations, such as ones due to missing containers.
+
+When a Partial Protocol is run, exported, or combined with another
+Protocol, each call will be replayed on a full-fledged Protocol object.
 
 ```python
 # Container and instrument definitions
