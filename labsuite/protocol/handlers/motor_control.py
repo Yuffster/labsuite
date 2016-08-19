@@ -2,6 +2,7 @@ from labsuite.util.log import debug
 from labsuite.protocol.handlers import ProtocolHandler
 import labsuite.drivers.motor as motor_drivers
 from labsuite.util import exceptions as x
+from labsuite.util import ExceptionProxy
 
 class MotorControlHandler(ProtocolHandler):
 
@@ -172,3 +173,6 @@ class PipetteMotor():
         @property
         def name(self):
             return self.pipette.name
+
+class PartialMotorControlHandler(ExceptionProxy):
+    pass

@@ -30,6 +30,11 @@ class ExceptionProxy():
         self._original._partial_proxy = self
         self._problems = []
         self._calls = []
+        for e in allowed:
+            if not issubclass(e, Exception):
+                raise TypeError(
+                    "Exceptions must inherit from BaseException."
+                )
         self._allowed_exceptions = tuple(allowed)
 
     def __getattr__(self, name):
@@ -50,7 +55,7 @@ class ExceptionProxy():
             return catch
         return prop
 
-    def __add__(self, b):
+    def apply(self, b):
         """
         Combines other objects with this one by concatenating the
         list of stored calls.
@@ -71,6 +76,17 @@ class ExceptionProxy():
                 "Can't add {} to {}; try reversing the operand order."
                 .format(type(self), 'partial')
             )
+
+    def __add__(self, b):
+        """
+        Concat operator; creates a copy of this instance and returns
+        new combined result.
+        """
+        # Copy self so we don't mess with it directly.
+        a = self.__class__(self._original, *self._allowed_exceptions)
+        a.apply(self)
+        a.apply(b)
+        return a
 
     def reapply(self, thing):
         """
