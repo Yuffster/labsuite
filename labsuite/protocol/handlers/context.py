@@ -77,7 +77,7 @@ class ContextHandler(ProtocolHandler):
         if len(ks) is 1:
             return self.get_instrument(axis=ks[0])
         if len(ks) is 0:
-            raise x.MissingInstrument("No instruments loaded.")
+            raise x.InstrumentMissing("No instruments loaded.")
         else:
             return None
 
