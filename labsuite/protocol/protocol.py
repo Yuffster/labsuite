@@ -5,6 +5,7 @@ from labsuite.util.log import debug
 from labsuite.protocol.handlers import ContextHandler, MotorControlHandler
 from labsuite.util import hashing
 from labsuite.util import exceptions as x
+from labsuite.util import ExceptionProxy
 
 import time
 import copy
@@ -624,81 +625,7 @@ class Protocol():
         allowing ProtocolExceptions within the partial to be ignored until
         final construction.
         """
-        return PartialProtocol(Protocol(*args, **kwargs))
+        return PartialProtocol(Protocol(*args, **kwargs), x.ProtocolException)
 
-
-class PartialProtocol():
-
-    _protocol = None  # Act as a proxy to this object.
-    _problems = None  # [] Holds caught ProtocolExceptions.
-    _calls = None  # [] Remember every call made to this proxy.
-
-    def __init__(self, protocol):
-        """
-        Wrap the original object so we can log calls and exceptions.
-        """
-        self._protocol = protocol
-        self._protocol._partial_proxy = self
-        self._problems = []
-        self._calls = []
-
-    def __getattr__(self, name):
-        """
-        Act as a proxy to the wrapped object and store all the calls for
-        later application on the desired instance.
-
-        If Exceptions occur, log them so they can be fixed.
-        """
-        prop = getattr(self._protocol, name)
-        if getattr(prop, '__call__', None) is not None:
-            def catch(*args, **kwargs):
-                try:
-                    self._calls.append((name, args, kwargs))
-                    prop(*args, **kwargs)
-                except x.ProtocolException as e:
-                    self._problems.append(str(e))
-            return catch
-        return prop
-
-    def __add__(self, b):
-        """
-        Combines other Protocols with this one by concatenating the
-        list of stored calls.
-
-        Raises an exception if the user tries to add an actual instance to
-        this proxy, since actual instances don't log their calls and we want
-        to preserve the call order.
-        """
-        if isinstance(b, type(self)):
-            # Combine the stored calls of other proxy objects.
-            for method, args, kwargs in b._calls:
-                getattr(self, method)(*args, **kwargs)
-            return self
-        else:
-            # We can't concat an actual Protocol because Protocols don't
-            # log their calls.
-            raise TypeError(
-                "Can't add Protocol to PartialProtocol;"+
-                " try reversing the operand order."
-            )
-
-    def reapply(self, thing):
-        """
-        Take all the stored calls and call them on an actual instance.
-
-        Or get a bunch of method missing errors.
-
-        We don't check for instance compatibility by type because we might
-        want to combine disparate objects with the same interface.
-        """
-        for method, args, kwargs in self._calls:
-            getattr(thing, method)(*args, **kwargs)
-
-    @property
-    def problems(self):
-        return copy.deepcopy(self._problems)
-
-    @property
-    def is_valid(self):
-        return len(self._problems) == 0
-
+class PartialProtocol(ExceptionProxy):
+    pass
