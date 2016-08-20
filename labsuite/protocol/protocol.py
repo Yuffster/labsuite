@@ -549,13 +549,23 @@ class Protocol():
         Runs protocol on a virtualized MotorHandler to ensure that there are
         no run-specific problems.
         """
+        # Detach the motor handler and disable the logger.
         logger = logging.getLogger()
         logger.disabled = True
-        mh = self._motor_handler
-        self.attach_motor()  # Virtualized motor handler.
-        self.run_all()
-        self._motor_handler = mh  # Put everything back the way it was.
-        logger.disabled = False
+        oh = self._motor_handler
+        if oh:
+            self._handlers.remove(oh)
+        try:
+            nh = self.attach_motor()
+            self.run_all()
+        finally:
+            # Put everything back the way it was.
+            self._motor_handler = oh
+            if oh:
+                self._handlers.append(oh)
+            if nh:
+                self._handlers.remove(nh)
+            logger.disabled = False
 
     def attach_handler(self, handler_class):
         """
