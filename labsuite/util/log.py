@@ -42,4 +42,4 @@ log_path = os.path.join(
 )
 
 if os.path.isdir(log_path):
-    set_log_file(os.path.join(log_path, 'opentrons.log'))
+    set_log_file(os.path.join(log_path, 'labsuite.log'))
