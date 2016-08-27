@@ -102,7 +102,7 @@ class GridItem():
 
     def __init__(self, parent, position, properties=None):
         self.parent = parent
-        self.position = position
+        self.position = parent._normalize_position(position)
 
         properties = properties or {}
 
@@ -276,6 +276,10 @@ class GridContainer():
             raise Exception("No maximum row number provided.")
         if self.cols is None:
             raise Exception("No maximum column number provided.")
+        if col < 0:
+            raise x.SlotMissing("Column can't be less than 0.")
+        if row < 0:
+            raise x.SlotMissing("Row can't be less than 0.")
         if self.rows and (row + 1 > self.rows):  # row is zero-indexed
             raise x.SlotMissing(
                 "Row #{} out of range (max is {}).".format(row, self.rows)
