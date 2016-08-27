@@ -71,7 +71,7 @@ def humanize_position(position):
     'K12'
     """
     col, row = normalize_position(position)
-    if col > 25:  # Support this later.
+    if col > 25 or col < 0:  # Support double letters later.
         raise x.SlotMissing(
             "Column value of {} is out of supported range."
             .format(col)
