@@ -393,7 +393,7 @@ class ItemGroup():
                 for e in self._elements:
                     out.append(getattr(e, name)(*args, **kwargs))
                 # Skip the return list if there's no response.
-                if len(list(filter(None, out))) == 0:
+                if sum(r is not None for r in out) == 0:
                     return None
                 return out
             return wrapper
