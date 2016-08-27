@@ -1,6 +1,7 @@
 import unittest
 from labsuite.labware import tipracks
 from labsuite.util import exceptions as x
+from labsuite.labware.grid import humanize_position
 
 
 class TiprackTest(unittest.TestCase):
@@ -111,20 +112,39 @@ class TiprackTest(unittest.TestCase):
         self.rack.set_tips_used(96)
         self.assertEqual(self.rack.has_tips, False)
 
-    def test_slot_set_used(self):
+    def test_slot_row_col_exceptions(self):
         tip = self.rack.tip('A1')
         tip.set_used()
         self.assertEqual(
             self.rack.tip('A2').position,
             self.rack.get_next_tip().position
         )
-        row = self.rack.row(1)
-        with self.assertRaises(x.TipMissing):  # A tip's already been used.
-            row.set_used()
-        col = self.rack.col('A')
-        with self.assertRaises(x.TipMissing):  # A tip's already been used.
-            col.set_used()
+        with self.assertRaises(x.TipMissing):
+            self.rack.row(0).set_used()
+        with self.assertRaises(x.TipMissing):
+            self.rack.row(1).set_used()
+        with self.assertRaises(x.TipMissing):
+            self.rack.col('A').set_used()
+
+    def test_get_next_row(self):
+        self.rack.tip('A1').set_used()
         row2 = self.rack.row(2)
         row2.set_used()
-        colb = self.rack.col('b')
-        colb.set_used()
+        colc = self.rack.col('c')
+        with self.assertRaises(x.TipMissing):
+            colc.set_used()
+        row3 = self.rack.get_clean_row().position
+        self.assertEqual(row3, [(i, 3) for i in range(8)])
+        # Same because get_clean_row is nondestructive.
+        row4 = self.rack.get_next_row().position
+        self.assertEqual(row4, [(i, 3) for i in range(8)])
+
+    def test_slot_get_clean_col(self):
+        self.rack.tip('A1').set_used()
+        col = self.rack.get_clean_col().position
+        self.assertEqual(col, [(1, i) for i in range(12)])
+        # Same because get_clean_col is nondestructive.
+        col2 = self.rack.get_next_col().position
+        self.assertEqual(col2, [(1, i) for i in range(12)])
+        col3 = self.rack.get_clean_col().position
+        self.assertEqual(col3, [(2, i) for i in range(12)])

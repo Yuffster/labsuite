@@ -83,6 +83,30 @@ class Tiprack(GridContainer):
                     continue
                 return tip
 
+    def get_clean_row(self, tag=None):
+        for r in range(self.rows):
+            row = self.row(r)
+            if True in row.used:  # One of the tips is used, gross!
+                continue
+            return row
+
+    def get_clean_col(self, tag=None):
+        for c in range(self.cols):
+            col = self.col(c)
+            if True in col.used:  # One of the tips is used, gross!
+                continue
+            return col
+
+    def get_next_col(self, tag=None):
+        col = self.get_clean_col(tag)
+        col.set_used()
+        return col
+
+    def get_next_row(self, tag=None):
+        row = self.get_clean_row(tag)
+        row.set_used()
+        return row
+
     def get_next_tip(self, tag=None):
         """
         Returns the next clean tip in the rack and marks it as used.
