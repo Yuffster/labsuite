@@ -110,3 +110,21 @@ class TiprackTest(unittest.TestCase):
         self.assertEqual(self.rack.has_tips, True)
         self.rack.set_tips_used(96)
         self.assertEqual(self.rack.has_tips, False)
+
+    def test_slot_set_used(self):
+        tip = self.rack.tip('A1')
+        tip.set_used()
+        self.assertEqual(
+            self.rack.tip('A2').position,
+            self.rack.get_next_tip().position
+        )
+        row = self.rack.row(1)
+        with self.assertRaises(x.TipMissing):  # A tip's already been used.
+            row.set_used()
+        col = self.rack.col('A')
+        with self.assertRaises(x.TipMissing):  # A tip's already been used.
+            col.set_used()
+        row2 = self.rack.row(2)
+        row2.set_used()
+        colb = self.rack.col('b')
+        colb.set_used()
