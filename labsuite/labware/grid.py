@@ -227,8 +227,27 @@ class GridContainer():
             props = None
         return self.child_class(self, pos, props)
 
-    def init_child_collection(self, positions):
-        return self.collection_class(self, positions)
+    def get_child_collection(self, positions):
+        """ Initiates a child collection. """
+        group = []
+        for p in positions:
+            pos = self._normalize_position(p)
+            group.append(self.get_child(pos))
+        return ItemGroup(group)
+
+    def row(self, row):
+        """ Returns a row as a child collection. """
+        _, row = self._normalize_position((0, row))
+        positions = [(col, row) for col in range(self.cols)]
+        return self.get_child_collection(positions)
+
+    def col(self, col):
+        """ Returns a column as a child collection. """
+        if type(col) is str:
+            col = ord('A') - ord(col.upper())
+        col, _ = self._normalize_position((col, 0))
+        positions = [(col, row) for row in range(self.rows)]
+        return self.get_child_collection(positions)
 
     def _normalize_position(self, position):
         """
@@ -327,3 +346,43 @@ class GridContainer():
         for pos in wells:
             normalized[normalize_position(pos)] = wells[pos]
         cls._custom_wells = normalized
+
+
+class ItemGroup():
+
+    """
+    This doesn't really have anything to do with the grid at all, but it lives
+    here because it's the only application of collections.
+
+    All it does is wrap an array of objects with a getattr proxy that applies
+    calls to all members of the group and returns the results (if any).
+    """
+
+    _elements = None  # Array of all the elements in the group.
+
+    def __init__(self, elements):
+        self._elements = elements
+
+    def __getattr__(self, name):
+        """
+        Nothing magical here, just pass the call on to all members of this
+        group. If there's a response, it'll be returned as a list.
+        """
+        prop = getattr(self._elements[0], name)
+        if getattr(prop, '__call__', None) is not None:  # Return a method.
+            def wrapper(*args, **kwargs):
+                out = []
+                for e in self._elements:
+                    out.append(getattr(e, name)(*args, **kwargs))
+                # Skip the return list if there's no response.
+                if len(list(filter(None, out))) == 0:
+                    return None
+                return out
+            return wrapper
+        else:  # Return the property on all the items.
+            out = []
+            for e in self._elements:
+                out.append(getattr(e, name))
+            if len(list(filter(None, out))) == 0:  # All Nones = None
+                return None
+            return out

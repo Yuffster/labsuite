@@ -1,7 +1,33 @@
 import unittest
-from labsuite.labware.grid import GridContainer, normalize_position, humanize_position
+from labsuite.labware.grid import GridContainer, ItemGroup, normalize_position, humanize_position
 from labsuite.compilers.plate_map import PlateMap
+from labsuite.labware.microplates import Microplate
 import os
+
+
+class MockGroup(ItemGroup):
+    pass
+
+
+class MockItem():
+
+    n = 0  # Just a counter for testing.
+    thing = None  # Instance variable.
+
+    def __init__(self, n):
+        self.n = n
+
+    def add(self, n):
+        self.n += n
+        return self.n
+
+    def set_thing(self, thing):
+        self.thing = thing
+
+    @property
+    def successor(self):
+        return self.n + 1  # I've been doing Haskell. :3
+
 
 class GridTest(unittest.TestCase):
 
@@ -102,3 +128,33 @@ class GridTest(unittest.TestCase):
                 c = humanize_position((col, row))
                 self.assertEqual(int(plate.get_well(c)), n)
                 n += 1
+
+    def test_item_group(self):
+        """ Item group test (mocked). """
+        group = MockGroup([MockItem(i) for i in range(10)])
+        added = group.add(2)
+        ex1 = [n + 2 for n in range(10)]
+        self.assertEqual(ex1, added)
+        successor = group.successor
+        # Three because we just added two. Two tests in one!
+        ex2 = [n + 3 for n in range(10)]
+        self.assertEqual(ex2, successor)
+        self.assertEqual(group.thing, None)
+        self.assertEqual(group.set_thing('hi'), None)
+        self.assertEqual(group.thing, ['hi' for _ in range(10)])
+
+    def test_grid_row_group(self):
+        """ Grid row acts as group. """
+        plate = Microplate()
+        plate.col('A').allocate(water=10)
+        vols = [plate.well((0, r)).get_volume('water') for r in range(12)]
+        self.assertEqual([10 for _ in range(12)], vols)
+        self.assertEqual(plate.col('A').get_volume('water'), vols)
+        vols = [plate.well((0, r)).get_volume('water') for r in range(12)]
+        expected_vols = [15 for _ in range(8)]
+        expected_vols[0] += 10  # Remember, we added to the column.
+        plate.row(0).allocate(water=15)
+        rvols = [plate.well((c, 0)).get_volume('water') for c in range(8)]
+        self.assertEqual(plate.row(0).get_volume('water'), expected_vols)
+        self.assertEqual(rvols, plate.row(0).get_volume('water'))
+        self.assertEqual(plate.row(0).get_volume('water'), rvols)
