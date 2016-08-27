@@ -259,7 +259,7 @@ class GridContainer():
     def col(self, col):
         """ Returns a column as a child collection. """
         if type(col) is str:
-            col = ord('A') - ord(col.upper())
+            col = ord(col.upper()) - ord('A')
         col, _ = self._normalize_position((col, 0))
         positions = [(col, row) for row in range(self.rows)]
         return self.get_child_collection(positions)
