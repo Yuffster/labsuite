@@ -59,3 +59,40 @@ class PipetteTest(unittest.TestCase):
         self.assertEqual(self.pipette.supports_volume(1), True)
         self.assertEqual(self.pipette.supports_volume(0), False)
         self.assertEqual(self.pipette.supports_volume(11), False)
+
+    def test_multichannel_pipettes(self):
+        # p2
+        p2 = pipettes.load_instrument('p2')
+        p2_12 = pipettes.load_instrument('p2.12')
+        p2_8 = pipettes.load_instrument('p2.8')
+        self.assertEqual(p2.channels, 1)
+        self.assertEqual(p2_12.channels, 12)
+        self.assertEqual(p2_8.channels, 8)
+        # p10
+        p10 = pipettes.load_instrument('p10')
+        p10_12 = pipettes.load_instrument('p10.12')
+        p10_8 = pipettes.load_instrument('p10.8')
+        self.assertEqual(p10.channels, 1)
+        self.assertEqual(p10_12.channels, 12)
+        self.assertEqual(p10_8.channels, 8)
+        # p20
+        p20 = pipettes.load_instrument('p20')
+        p20_12 = pipettes.load_instrument('p20.12')
+        p20_8 = pipettes.load_instrument('p20.8')
+        self.assertEqual(p20.channels, 1)
+        self.assertEqual(p20_12.channels, 12)
+        self.assertEqual(p20_8.channels, 8)
+        # p200
+        p200 = pipettes.load_instrument('p200')
+        p200_12 = pipettes.load_instrument('p200.12')
+        p200_8 = pipettes.load_instrument('p200.8')
+        self.assertEqual(p200.channels, 1)
+        self.assertEqual(p200_12.channels, 12)
+        self.assertEqual(p200_8.channels, 8)
+        # p1000
+        p1000 = pipettes.load_instrument('p1000')
+        p1000_12 = pipettes.load_instrument('p1000.12')
+        p1000_8 = pipettes.load_instrument('p1000.8')
+        self.assertEqual(p1000.channels, 1)
+        self.assertEqual(p1000_12.channels, 12)
+        self.assertEqual(p1000_8.channels, 8)
