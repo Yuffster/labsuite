@@ -135,10 +135,22 @@ class GridItem():
         For example, a Deck module at A1 would be [(0, 0)] and the A2 well
         position on that module would be [(0, 0), (0, 1)].
         """
+        if self.position:
+            pos = normalize_position(self.position)
+        else:
+            return []  # It's floating in a void. D:
+
         if self.parent:
             return self.parent.address + [self.position]
         else:
-            return [self.position]
+            return [normalize_position(self.position)]
+
+    @property
+    def human_address(self):
+        address = self.address
+        if len(address) == 0:
+            return None
+        return ':'.join(list(map(humanize_position, address)))
 
 
 class GridContainer():
@@ -195,8 +207,11 @@ class GridContainer():
     """
     _instance = None
 
-    def __init__(self, parent=None, **kwargs):
+    position = None
+
+    def __init__(self, parent=None, position=None, **kwargs):
         self.parent = parent
+        self.position = position
         self._children = {}
 
     def get_child_coordinates(self, position):
@@ -297,11 +312,14 @@ class GridContainer():
 
     @property
     def address(self):
-        pos = normalize_position(self.position)
-        if self.parent:
-            return self.parent.address + [pos]
+        if self.position:
+            pos = normalize_position(self.position)
         else:
-            return [pos]
+            return []  # It's floating in a void. D:
+        if self.parent:
+            return self.parent.address + [self.position]
+        else:
+            return [normalize_position(self.position)]
 
     @classmethod
     def _get_instance(cls):

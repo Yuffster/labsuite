@@ -2,6 +2,7 @@ import unittest
 from labsuite.labware.grid import GridContainer, ItemGroup, normalize_position, humanize_position
 from labsuite.compilers.plate_map import PlateMap
 from labsuite.labware.microplates import Microplate
+from labsuite.labware.deck import Deck
 import os
 
 
@@ -158,3 +159,14 @@ class GridTest(unittest.TestCase):
         self.assertEqual(plate.row(0).get_volume('water'), expected_vols)
         self.assertEqual(rvols, plate.row(0).get_volume('water'))
         self.assertEqual(plate.row(0).get_volume('water'), rvols)
+
+    def test_address(self):
+        """ Address. """
+        plate = Microplate()
+        self.assertEqual(plate.well('A1').address, [(0, 0)])
+        self.assertEqual(plate.well('a1').human_address, 'A1')
+        deck = Deck()
+        deck.add_module('A1', 'microplate')
+        well = deck.slot('A1').well('B4')
+        self.assertEqual(well.human_address, 'A1:B4')
+        self.assertEqual(well.address, [(0, 0), (1, 3)])
