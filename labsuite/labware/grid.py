@@ -401,6 +401,6 @@ class ItemGroup():
             out = []
             for e in self._elements:
                 out.append(getattr(e, name))
-            if len(list(filter(None, out))) == 0:  # All Nones = None
+            if sum(r is not None for r in out) == 0:  # All Nones = None
                 return None
             return out
