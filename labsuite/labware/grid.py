@@ -1,5 +1,6 @@
 from math import floor
 from labsuite.util import exceptions as x
+from copy import deepcopy
 
 def normalize_position(position):
     """
@@ -394,15 +395,24 @@ class ItemGroup():
 
     def __getattr__(self, name):
         """
-        Nothing magical here, just pass the call on to all members of this
+        There be dragons here.
+
+        Essentially we just pass the call on to all members of this
         group. If there's a response, it'll be returned as a list.
+
+        But we need to copy all the arguments in case they're a reference
+        and the calling method mutates the referenced object.
+
+        We also need to do a proper group combination, meaning group1(group2)
+        applies each element in group1 to each corresponding element in
+        group2, rather than the alternative, which would be to apply every
+        element in group1 to every single element in group1.
         """
         prop = getattr(self._elements[0], name)
         if getattr(prop, '__call__', None) is not None:  # Return a method.
             def wrapper(*args, **kwargs):
-                out = []
-                for e in self._elements:
-                    out.append(getattr(e, name)(*args, **kwargs))
+                # Do a proper group combination.
+                out = self._group_combination(name, args, kwargs)
                 # Skip the return list if there's no response.
                 if sum(r is not None for r in out) == 0:
                     return None
@@ -418,3 +428,56 @@ class ItemGroup():
 
     def __getitem__(self, i):
         return self._elements[i]
+
+    def _assert_compatible_lengths(self, args, kwargs):
+        """
+        Makes sure all the item groups being dealt with here are the same
+        length.
+        """
+        for i, a in enumerate(args):
+            if isinstance(a, self.__class__) and\
+             len(self._elements) != len(a._elements):
+                raise ValueError(
+                    "Incompatible group lengths for argument #{} ({} vs {})"
+                    .format(i + 1, len(self._elements), len(a._elements))
+                )
+        for item, a in kwargs.items():
+            if isinstance(a, self.__class__) and\
+             len(self._elements) != len(a._elements()):
+                raise ValueError(
+                    "Incompatible group lengths for kwarg {} ({} vs {})"
+                    .format(k, len(self._elements), len(a._elements))
+                )
+                return True
+
+
+    def _group_combination(self, name, args, kwargs):
+        """
+        Some magic here; we have at least one group in the args and we need
+        to combine them properly.
+
+        We also need to deepcopy the args in case the called method is unaware
+        of this magic and mutates the parameters.
+
+        If we don't, row1.transfer(row2, ul=10) will transfer 10µl from every
+        well in row1 to every row in row2, d'oh.
+
+        I'm beginning to regret this decision.
+        """
+        self._assert_compatible_lengths(args, kwargs)
+        out = []
+        for i, e in enumerate(self._elements):
+            fun = getattr(e, name)
+            a, kw = [], {}
+            for j, r in enumerate(args):
+                if isinstance(r, self.__class__):
+                    a.append(r._elements[i])
+                else:
+                    a.append(deepcopy(r))
+            for k, r in kwargs.items():
+                if isinstance(r, self.__class__):
+                    kw[k] = r._elements[i]
+                else:
+                    kw[k] = deepcopy(r)
+            out.append(fun(*a, **kw))
+        return out

@@ -22,6 +22,17 @@ class MockItem():
         self.n += n
         return self.n
 
+    def add_item(self, item):
+        self.n += item.n
+        return self.n
+
+    def add_to_item(self, item):
+        item.add_item(self)
+
+    def add_two_items(self, a, b):
+        self.add_item(a)
+        self.add_item(b)
+
     def set_thing(self, thing):
         self.thing = thing
 
@@ -143,6 +154,34 @@ class GridTest(unittest.TestCase):
         self.assertEqual(group.thing, None)
         self.assertEqual(group.set_thing('hi'), None)
         self.assertEqual(group.thing, ['hi' for _ in range(10)])
+
+    def test_group_combination(self):
+        """ Group combination. """
+        group1 = MockGroup([MockItem(i) for i in range(10)])
+        group2 = MockGroup([MockItem(i) for i in range(10)])
+        group1.add_item(group2)
+        self.assertEqual(group1.n, [n*2 for n in range(10)])
+        group1.add_to_item(group2)
+        self.assertEqual(group2.n, [n*3 for n in range(10)])
+        # Test with multiple groups.
+        a = MockGroup([MockItem(i) for i in range(10)])
+        b = MockGroup([MockItem(i * 2) for i in range(10)])
+        c = MockGroup([MockItem(i * 3) for i in range(10)])
+        a.add_two_items(b, c)
+        self.assertEqual(a.n, [n * 6 for n in range(10)])
+
+    def test_group_combination_incompatible_length(self):
+        """ Group combination, incompatible lengths. """
+        group1 = MockGroup([MockItem(i) for i in range(10)])
+        group2 = MockGroup([MockItem(i) for i in range(9)])
+        with self.assertRaises(ValueError):
+            group1.add_item(group2)
+        with self.assertRaises(ValueError):
+            group1.add_to_item(group2)
+        with self.assertRaises(ValueError):
+            group2.add_item(group1)
+        with self.assertRaises(ValueError):
+            group2.add_to_item(group1)
 
     def test_grid_row_group(self):
         """ Grid row acts as group. """
