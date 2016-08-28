@@ -165,10 +165,6 @@ class PipetteMotor():
             axis = self.axis
             self.motor.move_motors(**{axis: position})
 
-        @property
-        def axis(self):
-            return self.pipette.axis
-
-        @property
-        def name(self):
-            return self.pipette.name
+        def __getattr__(self, name):
+            """ Fallback to Pipette for everything else. """
+            return getattr(self.pipette, name)
