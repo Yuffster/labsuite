@@ -160,6 +160,12 @@ class GridTest(unittest.TestCase):
         self.assertEqual(rvols, plate.row(0).get_volume('water'))
         self.assertEqual(plate.row(0).get_volume('water'), rvols)
 
+    def test_group_indexing(self):
+        """ Indexing on groups. """
+        group = MockGroup([MockItem(i) for i in range(10)])
+        for i in range(10):
+            self.assertEqual(group[i].successor, i + 1)
+
     def test_address(self):
         """ Address. """
         plate = Microplate()

@@ -408,3 +408,6 @@ class ItemGroup():
             if sum(r is not None for r in out) == 0:  # All Nones = None
                 return None
             return out
+
+    def __getitem__(self, i):
+        return self._elements[i]
