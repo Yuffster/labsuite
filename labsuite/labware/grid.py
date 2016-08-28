@@ -325,6 +325,13 @@ class GridContainer():
         else:
             return [normalize_position(self.position)]
 
+    @property
+    def human_address(self):
+        address = self.address
+        if len(address) == 0:
+            return None
+        return ':'.join(list(map(humanize_position, address)))
+
     @classmethod
     def _get_instance(cls):
         if not cls._instance or not isinstance(cls._instance, cls):
