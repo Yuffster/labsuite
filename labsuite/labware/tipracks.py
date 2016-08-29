@@ -71,6 +71,14 @@ class Tiprack(GridContainer):
             return True
         return self.get_clean_tip() is not None
 
+    @property
+    def has_row(self):
+        return self.get_clean_row() is not None
+
+    @property
+    def has_col(self):
+        return self.get_clean_col() is not None
+
     def get_clean_tip(self, tag=None):
         for n in range(self.rows * self.cols):
             tip = self.tip(self._position_in_sequence(n))
@@ -99,21 +107,34 @@ class Tiprack(GridContainer):
 
     def get_next_col(self, tag=None):
         col = self.get_clean_col(tag)
+        if col is None:
+            raise x.TipMissing(
+                "No unused column of tips on tiprack at {}"
+                .format(self.human_address)
+            )
         col.set_used()
         return col
 
     def get_next_row(self, tag=None):
         row = self.get_clean_row(tag)
+        if row is None:
+            raise x.TipMissing(
+                "No unused row of tips on tiprack at {}"
+                .format(self.human_address)
+            )
         row.set_used()
         return row
 
     def get_next_tip(self, tag=None):
         """
         Returns the next clean tip in the rack and marks it as used.
-
-        This might be deprecated at some point.
         """
         tip = self.get_clean_tip(tag)
+        if tip is None:
+            raise x.TipMissing(
+                "No unused tip on tiprack at {}"
+                .format(self.human_address)
+            )
         tip.set_used()
         return tip
 
