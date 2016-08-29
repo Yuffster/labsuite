@@ -1,5 +1,6 @@
 import unittest
 from labsuite.protocol import Protocol
+from labsuite.util import exceptions as x
 
 
 class ContextHandlerTest(unittest.TestCase):
@@ -141,3 +142,71 @@ class ContextHandlerTest(unittest.TestCase):
         self.assertEqual(c1, context.get_coordinates(h12, axis="A"))
         rack = context.find_container(name='tiprack.p200', has_tips=True)
         self.assertEqual([(1, 0)], rack.address)
+
+    def test_multichannel_search(self):
+        """ Find a multichannel pipette. """
+        context = self.protocol._context_handler
+        self.protocol.add_instrument('A', 'p200')
+        self.protocol.add_instrument('B', 'p20.12')
+        i1 = context.get_instrument(axis='B')
+        i2 = context.get_instrument(volume=20, channels=12)
+        self.assertEqual(i1, i2)
+        i3 = context.get_instrument(volume=200, channels=12)
+        self.assertEqual(i3, None)
+
+    def test_multichannel_tip_allocation(self):
+        context = self.protocol._context_handler
+        self.protocol.add_instrument('A', 'p20.12')
+        self.protocol.add_instrument('B', 'p20.8')
+        self.protocol.add_container('A1', 'tiprack.p20')
+        a = context.get_instrument(axis='A')
+        b = context.get_instrument(axis='B')
+        self.protocol.calibrate('A1', axis="A")
+        self.protocol.calibrate('A1', axis="B")
+        # Get a row first.
+        context.get_next_tip_coordinates(a)
+        with self.assertRaises(x.TipMissing):
+            context.get_next_tip_coordinates(b)
+        # Get a col first.
+        context = self.protocol.initialize_context()
+        context.get_next_tip_coordinates(b)
+        with self.assertRaises(x.TipMissing):
+            context.get_next_tip_coordinates(a)
+        # Add another tiprack, get both!
+        self.protocol.add_container('A2', 'tiprack.p20')
+        self.protocol.calibrate('A2', axis="A")
+        self.protocol.calibrate('A2', axis="B")
+        context = self.protocol.initialize_context()
+        context.get_next_tip_coordinates(a)
+        context.get_next_tip_coordinates(b)
+        # Exhaust the supply.
+        context = self.protocol.initialize_context()
+        for _ in range(8):
+            context.get_next_tip_coordinates(a)
+        for _ in range(12):
+            context.get_next_tip_coordinates(b)
+        with self.assertRaises(x.TipMissing):
+            context.get_next_tip_coordinates(a)
+        with self.assertRaises(x.TipMissing):
+            context.get_next_tip_coordinates(b)
+
+    def test_multichannel_transfer_cols(self):
+        """ Test multichannel transfer (cols). """
+        self.protocol.add_instrument('A', 'p20.12')
+        self.protocol.add_instrument('B', 'p20.8')
+        self.protocol.add_container('A1', 'microplate')
+        p = self.protocol._context_handler.find_container(name="microplate")
+        self.protocol.transfer('A1:A1', 'A1:B1', ul=10, tool='p20.12')
+        self.assertEqual(p.col('A').get_volume(), [-10 for n in range(12)])
+        self.assertEqual(p.col('B').get_volume(), [ 10 for n in range(12)])
+
+    def test_multichannel_transfer_rows(self):
+        """ Test multichannel transfer (rows). """
+        self.protocol.add_instrument('A', 'p20.12')
+        self.protocol.add_instrument('B', 'p20.8')
+        self.protocol.add_container('A1', 'microplate')
+        p = self.protocol._context_handler.find_container(name="microplate")
+        self.protocol.transfer('A1:A1', 'A1:A2', ul=15, tool='p20.8')
+        self.assertEqual(p.row(0).get_volume(), [-15 for n in range(8)])
+        self.assertEqual(p.row(1).get_volume(), [ 15 for n in range(8)])
+

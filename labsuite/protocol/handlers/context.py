@@ -193,11 +193,29 @@ class ContextHandler(ProtocolHandler):
         """
         Returns the next tip coordinates and decrements tip inventory.
         """
-        name = 'tiprack.{}'.format(pipette.name)
-        tiprack = self.find_container(name=name, has_tips=True)
-        if tiprack is None:
+        name = 'tiprack.{}'.format(pipette.size.lower())
+        # We won't necessarily use this rack, but we need its properties.
+        xrack = self.find_container(name=name)
+        if xrack is None:
             raise x.ContainerMissing("No tiprack found for {}.".format(name))
-        tip = tiprack.get_next_tip()
+        # Multichannel support.
+        if pipette.channels == xrack.cols:
+            tiprack = self.find_container(name=name, has_row=True)
+            if tiprack:
+                tip = tiprack.get_next_row()[0]
+        elif pipette.channels == xrack.rows:
+            tiprack = self.find_container(name=name, has_col=True)
+            if tiprack:
+                tip = tiprack.get_next_col()[0]
+        else:
+            tiprack = self.find_container(name=name, has_tips=True)
+            if tiprack:
+                tip = tiprack.get_next_tip()
+        if tiprack is None:
+            raise x.TipMissing(
+                "No tiprack found with enough tips for {}-channel {}."
+                .format(pipette.channels, pipette.size)
+            )
         return self.get_coordinates(tip.address, axis=pipette.axis)
 
     def get_trash_coordinates(self, axis=None):
@@ -210,11 +228,30 @@ class ContextHandler(ProtocolHandler):
         slot, well = self._protocol._normalize_address(well)
         return self._deck.slot(slot).get_child(well).get_volume()
 
-    def transfer(self, start=None, end=None, volume=None, **kwargs):
+    def transfer(self, start=None, end=None, volume=None, tool=None,
+                 **kwargs):
         start_slot, start_well = start
         end_slot, end_well = end
-        start = self._deck.slot(start_slot).get_child(start_well)
-        end = self._deck.slot(end_slot).get_child(end_well)
+        start_container = self._deck.slot(start_slot)
+        end_container = self._deck.slot(end_slot)
+        start = None
+        end = None
+        if tool:  # Account for multichannel.
+            inst = self.get_instrument(name=tool)
+            if start_container.cols == start_container.rows:
+                # Users are gonna love this one.
+                raise Exception(
+                    "Ambiguous multichannel transfer; plate is square."
+                )
+            elif inst.channels == start_container.rows:  # Column transfer.
+                start = start_container.col(start_well[0])
+                end = end_container.col(end_well[0])
+            elif inst.channels == start_container.cols:  # Row transfer.
+                start = start_container.row(start_well[1])
+                end = end_container.row(end_well[1])
+        if start is None:
+            start = self._deck.slot(start_slot).get_child(start_well)
+            end = self._deck.slot(end_slot).get_child(end_well)
         start.transfer(volume, end)
 
     def transfer_group(self, transfers=None, **kwargs):

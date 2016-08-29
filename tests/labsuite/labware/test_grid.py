@@ -213,6 +213,16 @@ class GridTest(unittest.TestCase):
         rows = plate.col('A').human_address
         self.assertEqual(rows, ['A{}'.format(i + 1) for i in range(12)])
 
+    def test_group_transfer(self):
+        plate = Microplate()
+        plate.col('A').transfer(10, plate.col('B'))
+        self.assertEqual(
+            plate.col('A').get_volume(), [-10 for _ in range(12)]
+        )
+        self.assertEqual(
+            plate.col('B').get_volume(), [ 10 for _ in range(12)]
+        )
+
     def test_group_indexing(self):
         """ Indexing on groups. """
         group = MockGroup([MockItem(i) for i in range(10)])
