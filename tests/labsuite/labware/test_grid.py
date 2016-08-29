@@ -199,6 +199,20 @@ class GridTest(unittest.TestCase):
         self.assertEqual(rvols, plate.row(0).get_volume('water'))
         self.assertEqual(plate.row(0).get_volume('water'), rvols)
 
+    def test_grid_row_addresses(self):
+        """ Grid row groups contain the correct addresses. """
+        plate = Microplate()
+        rows = plate.row(1).human_address
+        self.assertEqual(
+            rows, ['A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2']
+        )
+
+    def test_grid_col_addresses(self):
+        """ Grid row groups contain the correct addresses. """
+        plate = Microplate()
+        rows = plate.col('A').human_address
+        self.assertEqual(rows, ['A{}'.format(i + 1) for i in range(12)])
+
     def test_group_indexing(self):
         """ Indexing on groups. """
         group = MockGroup([MockItem(i) for i in range(10)])
