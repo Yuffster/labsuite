@@ -275,7 +275,7 @@ def compile(*sequences, output=None):
     protocol.add_container('A1', 'tuberack.15-50ml', label='Ingredients')
     protocol.add_container('E1', 'microplate.96', label='Fusx Output')
     protocol.add_container('A2', 'point.trash')
-    protocol.add_container('E3', 'microplate.96') # Cool deck.
+    protocol.add_container('E3', 'microplate.96')  # Cool deck.
     protocol.add_container('B2', 'tiprack.p10')
     protocol.add_container('B1', 'tiprack.p10')
     protocol.add_container('B3', 'tiprack.p10')

@@ -2,6 +2,7 @@ from labsuite.labware.grid import GridContainer, humanize_position
 from labsuite.labware.containers import load_container
 from labsuite.util import exceptions as x
 
+
 class Deck(GridContainer):
 
     rows = 3

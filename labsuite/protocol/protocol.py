@@ -192,7 +192,7 @@ class Protocol():
         # Add the instruments from second.
         for axis, name in b._instruments.items():
             if axis in self._instruments \
-            and self._instruments[axis] != name:
+               and self._instruments[axis] != name:
                 raise x.InstrumentConflict(
                     "Axis {} already allocated to {}".format(axis, name)
                 )
@@ -296,7 +296,7 @@ class Protocol():
         )
 
     def mix(self, start, ml=None, ul=None, repetitions=None, tool=None,
-        blowout=True, touchtip=True):
+            blowout=True, touchtip=True):
         volume = self._normalize_volume(ul, ml)
         tool = self.get_tool(name=tool, volume=volume)
         self.add_command(
@@ -622,7 +622,8 @@ class Protocol():
         """
         Determines whether or not this Protocol is valid.
         """
-        if self._partial_proxy is not None and self._partial_proxy.is_valid is False:
+        if self._partial_proxy is not None and \
+           self._partial_proxy.is_valid is False:
             raise x.PartialProtocolException(
                 error_message + " Problems: {}"
                 .format("; ".join(self._partial_proxy.problems))
@@ -636,6 +637,7 @@ class Protocol():
         final construction.
         """
         return PartialProtocol(Protocol(*args, **kwargs), x.ProtocolException)
+
 
 class PartialProtocol(ExceptionProxy):
     pass

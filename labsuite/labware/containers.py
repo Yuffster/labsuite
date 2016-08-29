@@ -93,7 +93,6 @@ def load_custom_containers(folder=None):
     if not folder:
         modpath = os.path.dirname(labware.__file__)
         folder = os.path.join(modpath, '..', 'config', 'containers')
-    files = []
     # Get all YAML files from the specified directory, parse then,
     # and send the data to add_custom_container.
     for f in os.listdir(folder):
@@ -235,7 +234,7 @@ def add_custom_container(data, name=None, parent=None, legacy=False):
     if name:
         _containers[container_name] = subclass
         if 'legacy_name' in data:
-            _containers['legacy.'+data['legacy_name']] = subclass
+            _containers['legacy.' + data['legacy_name']] = subclass
 
     # Recurse for subsets.
     for k in subsets:
@@ -305,7 +304,6 @@ def generate_legacy_container(container_name, format=False):
         print('\t"locations": {')
     for col in range(0, container.cols):
         for row in range(1, container.rows + 1):
-            loc = []
             pos = '{}{}'.format(chr(col + ord('A')), row)
             x, y = container.calculate_offset(pos)
             locs[pos] = {
@@ -398,8 +396,6 @@ def convert_legacy_container(container):
     Takes the dict from an old-style legacy containers.json format and
     converts it to the new format for serializing to YAML.
     """
-
-    lines = []
 
     wells = container['locations']
 

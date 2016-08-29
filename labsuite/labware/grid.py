@@ -2,6 +2,7 @@ from math import floor
 from labsuite.util import exceptions as x
 from copy import deepcopy
 
+
 def normalize_position(position):
     """
     Normalizes a coordinate (A1, B12, etc) into a tuple.
@@ -136,9 +137,7 @@ class GridItem():
         For example, a Deck module at A1 would be [(0, 0)] and the A2 well
         position on that module would be [(0, 0), (0, 1)].
         """
-        if self.position:
-            pos = normalize_position(self.position)
-        else:
+        if self.position is None:
             return []  # It's floating in a void. D:
 
         if self.parent:
@@ -317,9 +316,7 @@ class GridContainer():
 
     @property
     def address(self):
-        if self.position:
-            pos = normalize_position(self.position)
-        else:
+        if self.position is None:
             return []  # It's floating in a void. D:
         if self.parent:
             return self.parent.address + [self.position]
@@ -436,20 +433,19 @@ class ItemGroup():
         """
         for i, a in enumerate(args):
             if isinstance(a, self.__class__) and\
-             len(self._elements) != len(a._elements):
+               len(self._elements) != len(a._elements):
                 raise ValueError(
                     "Incompatible group lengths for argument #{} ({} vs {})"
                     .format(i + 1, len(self._elements), len(a._elements))
                 )
-        for item, a in kwargs.items():
+        for k, a in kwargs.items():
             if isinstance(a, self.__class__) and\
-             len(self._elements) != len(a._elements()):
+               len(self._elements) != len(a._elements()):
                 raise ValueError(
                     "Incompatible group lengths for kwarg {} ({} vs {})"
                     .format(k, len(self._elements), len(a._elements))
                 )
                 return True
-
 
     def _group_combination(self, name, args, kwargs):
         """

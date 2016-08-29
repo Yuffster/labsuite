@@ -3,6 +3,7 @@ from labsuite.protocol.handlers import ProtocolHandler
 import labsuite.drivers.motor as motor_drivers
 from labsuite.util import exceptions as x
 
+
 class MotorControlHandler(ProtocolHandler):
 
     _driver = None

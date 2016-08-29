@@ -24,7 +24,8 @@ class LiquidInventory():
     """
     _contents = None  # {}
 
-    def __init__(self, parent, max=None, min_working=None, max_working=None, ml=False):
+    def __init__(self, parent, max=None, min_working=None, max_working=None,
+                 ml=False):
         """ Initialize and set working volumes. """
         """
         I guess ideally, you'd have a subclass to define the working volumes
@@ -66,7 +67,6 @@ class LiquidInventory():
     @property
     def address(self):
         return self._parent.human_address
-
 
     def add_liquid(self, ml=False, **kwargs):
         """
@@ -195,11 +195,10 @@ class LiquidInventory():
 
         # Proportion math. We want to include an equal proportion of
         # all the liquids mixed into this well.
-        mix = {}
         liq = self._contents
         for l in liq:
             proportion = liq[l] / total_volume
-            value      = proportion * amount
+            value = proportion * amount
             self._contents[l] = self._contents[l] - value
             destination.add_named_liquid(value, l)
 

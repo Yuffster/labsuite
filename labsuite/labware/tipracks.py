@@ -1,5 +1,6 @@
-from labsuite.labware.grid import GridContainer, GridItem, normalize_position
+from labsuite.labware.grid import GridContainer, GridItem
 from labsuite.util import exceptions as x
+
 
 class TiprackSlot(GridItem):
 

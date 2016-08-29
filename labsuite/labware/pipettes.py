@@ -1,6 +1,7 @@
 import sys
 from labsuite.util import exceptions as x
 
+
 def load_instrument(name):
     cname = name.replace('.', '_')  # conform to dot notation standard
     p = getattr(
@@ -157,10 +158,12 @@ class Pipette_P2(Pipette):
     max_vol = 2
 
 
-class Pipette_P2_8(Pipette_P2, Pipette_8): pass
+class Pipette_P2_8(Pipette_P2, Pipette_8):
+    pass
 
 
-class Pipette_P2_12(Pipette_P2, Pipette_12): pass
+class Pipette_P2_12(Pipette_P2, Pipette_12):
+    pass
 
 
 class Pipette_P10(Pipette):
@@ -169,10 +172,12 @@ class Pipette_P10(Pipette):
     max_vol = 10
 
 
-class Pipette_P10_8(Pipette_P10, Pipette_8): pass
+class Pipette_P10_8(Pipette_P10, Pipette_8):
+    pass
 
 
-class Pipette_P10_12(Pipette_P10, Pipette_12): pass
+class Pipette_P10_12(Pipette_P10, Pipette_12):
+    pass
 
 
 class Pipette_P20(Pipette):
@@ -181,10 +186,12 @@ class Pipette_P20(Pipette):
     max_vol = 20
 
 
-class Pipette_P20_8(Pipette_P20, Pipette_8): pass
+class Pipette_P20_8(Pipette_P20, Pipette_8):
+    pass
 
 
-class Pipette_P20_12(Pipette_P20, Pipette_12): pass
+class Pipette_P20_12(Pipette_P20, Pipette_12):
+    pass
 
 
 class Pipette_P200(Pipette):
@@ -193,10 +200,12 @@ class Pipette_P200(Pipette):
     max_vol = 200
 
 
-class Pipette_P200_8(Pipette_P200, Pipette_8): pass
+class Pipette_P200_8(Pipette_P200, Pipette_8):
+    pass
 
 
-class Pipette_P200_12(Pipette_P200, Pipette_12): pass
+class Pipette_P200_12(Pipette_P200, Pipette_12):
+    pass
 
 
 class Pipette_P1000(Pipette):
@@ -205,7 +214,9 @@ class Pipette_P1000(Pipette):
     max_vol = 1000
 
 
-class Pipette_P1000_8(Pipette_P1000, Pipette_8): pass
+class Pipette_P1000_8(Pipette_P1000, Pipette_8):
+    pass
 
 
-class Pipette_P1000_12(Pipette_P1000, Pipette_12): pass
+class Pipette_P1000_12(Pipette_P1000, Pipette_12):
+    pass
