@@ -14,6 +14,7 @@ class LiquidInventory():
     min_working_volume = None
     max_working_volume = None
 
+    _parent = None
     _allow_liquid_debt = True
     _allow_unspecified_liquids = True
 
@@ -23,7 +24,7 @@ class LiquidInventory():
     """
     _contents = None  # {}
 
-    def __init__(self, max=None, min_working=None, max_working=None, ml=False):
+    def __init__(self, parent, max=None, min_working=None, max_working=None, ml=False):
         """ Initialize and set working volumes. """
         """
         I guess ideally, you'd have a subclass to define the working volumes
@@ -43,6 +44,7 @@ class LiquidInventory():
             self.min_working_volume = self.convert_ml(min_working, ml)
         if max_working:
             self.max_working_volume = self.convert_ml(max_working, ml)
+        self._parent = parent
 
     @property
     def allow_liquid_debt(self):
@@ -60,6 +62,11 @@ class LiquidInventory():
         that it works.
         """
         return self.__class__._allow_liquid_debt
+
+    @property
+    def address(self):
+        return self._parent.human_address
+
 
     def add_liquid(self, ml=False, **kwargs):
         """
@@ -81,7 +88,6 @@ class LiquidInventory():
               specified liquids have been defined.  For now, just
               be careful.
         """
-
         # Tally up the new liquids to make sure we can fit them into
         # the container.
         new_liquid = 0
@@ -115,8 +121,8 @@ class LiquidInventory():
         new_value = self.calculate_total_volume() + new_amount
         if (new_value > self.max_volume):
             raise x.LiquidOverflow(
-                "Liquid amount ({}µl) exceeds max volume ({}µl)."
-                .format(new_value, self.max_volume)
+                "Liquid amount ({}µl) in {} exceeds max volume ({}µl)."
+                .format(new_value, self.address, self.max_volume)
             )
 
     def calculate_total_volume(self, data=None):
@@ -144,11 +150,13 @@ class LiquidInventory():
         if name:
             if name not in self._contents:
                 raise x.LiquidMismatch(
-                    "Liquid '{}' not in container.".format(name)
+                    "Liquid '{}' not in container at {}."
+                    .format(name, self.address)
                 )
             if len(self._contents.keys()) > 1:
                 raise x.LiquidMismatch(
-                    "Liquid '{}' is a component of a mixture.".format(name)
+                    "Liquid '{}' in {} is a component of a mixture."
+                    .format(name, self.address)
                 )
         return self.calculate_total_volume()
 
@@ -157,23 +165,21 @@ class LiquidInventory():
             return self._contents[key] / self.calculate_total_volume()
         else:
             raise x.LiquidMismatch(
-                "Liquid '{}' not found in this container."
-                .format(key)
+                "Liquid '{}' not found in container at {}."
+                .format(key, self.address)
             )
 
     def transfer(self, amount, destination, ml=False, name=None):
         amount = self.convert_ml(amount, ml)
-
         # Ensure there's room in the destination well first.
         destination.assert_capacity(amount)
-
         # Ensure we have enough total volume to proceed with the
         # request. (Don't worry about working volumes for now.)
         total_volume = self.calculate_total_volume()
         if (self._allow_liquid_debt is False and total_volume < amount):
             raise x.LiquidUnavailable(
-                "Not enough liquid ({}µl) for transfer ({}µl)."
-                .format(total_volume, amount)
+                "Not enough liquid ({}µl) in {} for transfer ({}µl)."
+                .format(total_volume, self.address, amount)
             )
 
         if self._allow_liquid_debt and total_volume is 0:
@@ -222,7 +228,7 @@ class LiquidWell(GridItem):
         max_vol = custom.get('max_vol', par.max_vol)
 
         self._liquid = LiquidInventory(
-            max=volume, min_working=min_vol, max_working=max_vol
+            self, max=volume, min_working=min_vol, max_working=max_vol
         )
 
     def allocate(self, **kwargs):
