@@ -48,7 +48,7 @@ class ProtocolTest(unittest.TestCase):
         self.protocol.add_container('B1', 'microplate.96')
         self.protocol.add_instrument('A', 'p200')
         self.protocol.add_instrument('B', 'p20')
-        self.protocol.transfer('A1:A1', 'B1:B1', ul=100, tool='p20')
+        self.protocol.transfer('A1:A1', 'B1:B1', ul=100, tool='p200')
         expected = [{
             'command': 'transfer',
             'tool': 'p200',
