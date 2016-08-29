@@ -155,8 +155,8 @@ class GridTest(unittest.TestCase):
         self.assertEqual(group.set_thing('hi'), None)
         self.assertEqual(group.thing, ['hi' for _ in range(10)])
 
-    def test_group_combination(self):
-        """ Group combination. """
+    def test_group_application_to_groups(self):
+        """ Group application to other groups. """
         group1 = MockGroup([MockItem(i) for i in range(10)])
         group2 = MockGroup([MockItem(i) for i in range(10)])
         group1.add_item(group2)
@@ -169,6 +169,15 @@ class GridTest(unittest.TestCase):
         c = MockGroup([MockItem(i * 3) for i in range(10)])
         a.add_two_items(b, c)
         self.assertEqual(a.n, [n * 6 for n in range(10)])
+
+    def test_group_addition(self):
+        """ Group addition. """
+        a = MockGroup([MockItem(i) for i in range(10)])
+        b = MockGroup([MockItem(i) for i in range(10, 20)])
+        self.assertEqual((a + b)._elements, a._elements + b._elements)
+        self.assertEqual(len(a), 10)
+        self.assertEqual(len(b), 10)
+        self.assertEqual(len(a + b), 20)
 
     def test_group_combination_incompatible_length(self):
         """ Group combination, incompatible lengths. """

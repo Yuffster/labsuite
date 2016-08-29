@@ -481,3 +481,13 @@ class ItemGroup():
                     kw[k] = deepcopy(r)
             out.append(fun(*a, **kw))
         return out
+
+    def __add__(self, b):
+        """
+        Returns a new ItemGroup which contains all the elements in this group
+        plus the elements in the passed group.
+        """
+        return self.__class__(self._elements + b._elements)
+
+    def __len__(self):
+        return len(self._elements)
