@@ -49,6 +49,8 @@ class ContextHandler(ProtocolHandler):
         volume = kwargs.pop('volume', None)
         min_vol = kwargs.pop('min_vol', None)
         max_vol = kwargs.pop('max_vol', None)
+        if name is not None:
+            kwargs['name'] = name
         for k, i in sorted(self._instruments.items()):
             match = True
             if volume and i.supports_volume(volume) is False:
