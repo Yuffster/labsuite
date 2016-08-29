@@ -456,11 +456,11 @@ class ItemGroup():
         Some magic here; we have at least one group in the args and we need
         to combine them properly.
 
-        We also need to deepcopy the args in case the called method is unaware
-        of this magic and mutates the parameters.
-
         If we don't, row1.transfer(row2, ul=10) will transfer 10µl from every
         well in row1 to every row in row2, d'oh.
+
+        We also need to deepcopy the args in case the called method is unaware
+        of this magic and mutates the parameters.
 
         I'm beginning to regret this decision.
         """
