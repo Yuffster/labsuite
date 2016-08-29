@@ -2,11 +2,13 @@ import sys
 from labsuite.util import exceptions as x
 
 def load_instrument(name):
-    name = name.replace('.', '_')  # conform to dot notation standard
-    return getattr(
+    cname = name.replace('.', '_')  # conform to dot notation standard
+    p = getattr(
         sys.modules[__name__],
-        'Pipette_{}'.format(name.upper())
+        'Pipette_{}'.format(cname.capitalize())
     )()
+    p.set_name(name)
+    return p
 
 
 class Pipette():
@@ -15,6 +17,8 @@ class Pipette():
     size = 'P10'
     min_vol = 0
     max_vol = 10
+
+    _name = None  # Labware name used to load this object.
 
     _top = None  # Top of the plunger.
     _blowout = None  # Bottom of the plunger (all liquid expelled).
@@ -133,7 +137,10 @@ class Pipette():
 
     @property
     def name(self):
-        return self.size.lower()
+        return self._name or self.size.lower()
+
+    def set_name(self, name):
+        self._name = name
 
 
 class Pipette_8(Pipette):
