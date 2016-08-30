@@ -94,12 +94,12 @@ class ContextHandlerTest(unittest.TestCase):
     def test_find_instrument_by_volume(self):
         """ Find instrument by volume. """
         self.protocol.add_instrument('A', 'p10')
-        i = self.protocol._context_handler.get_instrument(volume=6)
+        i = self.protocol._context_handler.get_instrument(has_volume=6)
         self.assertEqual(i.supports_volume(6), True)
-        j = self.protocol._context_handler.get_instrument(volume=50)
+        j = self.protocol._context_handler.get_instrument(has_volume=50)
         self.assertEqual(j, None)
         self.protocol.add_instrument('B', 'p200')
-        k = self.protocol._context_handler.get_instrument(volume=50)
+        k = self.protocol._context_handler.get_instrument(has_volume=50)
         self.assertEqual(k.name, 'p200')
 
     def test_tip_coordinates(self):
@@ -149,9 +149,9 @@ class ContextHandlerTest(unittest.TestCase):
         self.protocol.add_instrument('A', 'p200')
         self.protocol.add_instrument('B', 'p20.12')
         i1 = context.get_instrument(axis='B')
-        i2 = context.get_instrument(volume=20, channels=12)
+        i2 = context.get_instrument(has_volume=20, channels=12)
         self.assertEqual(i1, i2)
-        i3 = context.get_instrument(volume=200, channels=12)
+        i3 = context.get_instrument(has_volume=200, channels=12)
         self.assertEqual(i3, None)
 
     def test_multichannel_tip_allocation(self):

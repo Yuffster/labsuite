@@ -33,13 +33,13 @@ class MotorControlHandler(ProtocolHandler):
         self._driver.disconnect()
 
     def transfer(self, start=None, end=None, volume=None, tool=None, **kwargs):
-        tool = self.get_pipette(name=tool, volume=volume)
+        tool = self.get_pipette(name=tool, has_volume=volume)
         self.pickup_tip(tool)
         self.move_volume(tool, start, end, volume)
         self.dispose_tip(tool)
 
     def transfer_group(self, transfers=None, tool=None, volume=None, **kwargs):
-        tool = self.get_pipette(name=tool, volume=volume)
+        tool = self.get_pipette(name=tool, has_volume=volume)
         self.pickup_tip(tool)
         for t in transfers:
             self.move_volume(tool, t['start'], t['end'], t['volume'])
@@ -60,7 +60,7 @@ class MotorControlHandler(ProtocolHandler):
             self.transfer(start=t.pop('start'), end=end, **t)
 
     def mix(self, start=None, reps=None, tool=None, volume=None, **kwargs):
-        tool = self.get_pipette(name=tool, volume=volume)
+        tool = self.get_pipette(name=tool, has_volume=volume)
         self.pickup_tip(tool)
         for i in range(reps):
             self.move_volume(tool, start, start, volume)

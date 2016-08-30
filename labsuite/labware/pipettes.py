@@ -122,7 +122,16 @@ class Pipette():
         return volume * scale / self.max_vol
 
     def supports_volume(self, volume):
+        if volume is None:
+            # If the user doesn't care about volume, neither do we.
+            return True
         return volume <= self.max_vol and volume >= self.min_vol
+
+    def has_volumes(self, minv, maxv):
+        return self.supports_volume(minv) and self.supports_volume(maxv)
+
+    def has_volume(self, volume):
+        return self.supports_volume(volume)
 
     @property
     def axis(self):

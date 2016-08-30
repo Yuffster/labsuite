@@ -245,7 +245,7 @@ class Protocol():
     def transfer(self, start, end, ul=None, ml=None,
                  blowout=True, touchtip=True, tool=None):
         volume = self._normalize_volume(ul, ml)
-        tool = self.get_tool(volume=volume, name=tool)
+        tool = self.get_tool(has_volume=volume, name=tool)
         self.add_command(
             'transfer',
             volume=volume,
@@ -261,7 +261,7 @@ class Protocol():
             wells, ['start', 'end'], defaults
         )
         tool = self.get_tool(
-            name=tool, min_vol=min_vol, max_vol=max_vol
+            name=tool, has_volumes=(min_vol, max_vol)
         )
         self.add_command(
             'transfer_group',
@@ -274,7 +274,7 @@ class Protocol():
             wells, ['end'], defaults
         )
         tool = self.get_tool(
-            name=tool, min_vol=min_vol, max_vol=max_vol
+            name=tool, has_volumes=(min_vol, max_vol)
         )
         self.add_command(
             'distribute',
@@ -287,7 +287,7 @@ class Protocol():
         transfers, min_vol, max_vol = self._make_transfer_group(
             wells, ['start'], defaults
         )
-        tool = self.get_tool(name=tool, min_vol=min_vol, max_vol=max_vol)
+        tool = self.get_tool(name=tool, has_volumes=(min_vol, max_vol))
         self.add_command(
             'consolidate',
             tool=tool.name,
@@ -298,7 +298,7 @@ class Protocol():
     def mix(self, start, ml=None, ul=None, repetitions=None, tool=None,
             blowout=True, touchtip=True):
         volume = self._normalize_volume(ul, ml)
-        tool = self.get_tool(name=tool, volume=volume)
+        tool = self.get_tool(name=tool, has_volume=volume)
         self.add_command(
             'mix',
             tool=tool.name,

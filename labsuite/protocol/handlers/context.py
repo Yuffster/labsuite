@@ -46,21 +46,21 @@ class ContextHandler(ProtocolHandler):
                     if '_axis' in self._calibration[axis]:
                         inst.calibrate(**self._calibration[axis]['_axis'])
                 return self._instruments[axis]
-        volume = kwargs.pop('volume', None)
-        min_vol = kwargs.pop('min_vol', None)
-        max_vol = kwargs.pop('max_vol', None)
         if name is not None:
             kwargs['name'] = name
         for k, i in sorted(self._instruments.items()):
             match = True
-            if volume and i.supports_volume(volume) is False:
-                continue
-            if min_vol and i.supports_volume(min_vol) is False:
-                continue
-            if max_vol and i.supports_volume(max_vol) is False:
-                continue
             for j, v in kwargs.items():
-                if getattr(i, j) != v:
+                # If the property is a method, take the tuple arguments
+                # and pass that on, then except a boolean value of True.
+                # This lets us do things like supports_volume=(5, 10).
+                prop = getattr(i, j)
+                if getattr(prop, '__call__', None) is not None:
+                    if not isinstance(v, tuple):
+                        v = [v]
+                    if prop(*v) is not True:
+                        match = False
+                elif prop != v:
                     match = False
                     break
             if match:

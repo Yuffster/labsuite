@@ -104,7 +104,7 @@ class MotorHandlerTest(unittest.TestCase):
     def test_instrument_missing(self):
         with self.assertRaises(x.InstrumentMissing):
             m = self.protocol.attach_motor()
-            m.get_pipette(volume=1000)
+            m.get_pipette(has_volume=1000)
 
     def test_no_errors_from_commands(self):
         self.protocol.add_instrument('B', 'p200')
