@@ -1,5 +1,5 @@
 import unittest
-from labsuite.labware.grid import GridContainer, ItemGroup, normalize_position, humanize_position
+from labsuite.labware.grid import ItemGroup, normalize_position, humanize_position
 from labsuite.compilers.plate_map import PlateMap
 from labsuite.labware.microplates import Microplate
 from labsuite.labware.deck import Deck
@@ -17,6 +17,9 @@ class MockItem():
 
     def __init__(self, n):
         self.n = n
+
+    def __eq__(self, b):
+        return self.n == b.n
 
     def add(self, n):
         self.n += n
@@ -160,9 +163,9 @@ class GridTest(unittest.TestCase):
         group1 = MockGroup([MockItem(i) for i in range(10)])
         group2 = MockGroup([MockItem(i) for i in range(10)])
         group1.add_item(group2)
-        self.assertEqual(group1.n, [n*2 for n in range(10)])
+        self.assertEqual(group1.n, [n * 2 for n in range(10)])
         group1.add_to_item(group2)
-        self.assertEqual(group2.n, [n*3 for n in range(10)])
+        self.assertEqual(group2.n, [n * 3 for n in range(10)])
         # Test with multiple groups.
         a = MockGroup([MockItem(i) for i in range(10)])
         b = MockGroup([MockItem(i * 2) for i in range(10)])
@@ -229,7 +232,7 @@ class GridTest(unittest.TestCase):
             plate.col('A').get_volume(), [-10 for _ in range(12)]
         )
         self.assertEqual(
-            plate.col('B').get_volume(), [ 10 for _ in range(12)]
+            plate.col('B').get_volume(), [10 for _ in range(12)]
         )
 
     def test_group_indexing(self):
@@ -237,6 +240,19 @@ class GridTest(unittest.TestCase):
         group = MockGroup([MockItem(i) for i in range(10)])
         for i in range(10):
             self.assertEqual(group[i].successor, i + 1)
+
+    def test_group_equality(self):
+        """ Group equality applies local equality operator. """
+        a = MockGroup([MockItem(i) for i in range(10)])
+        b = MockGroup([MockItem(i) for i in range(10, 20)])
+        c = MockGroup([MockItem(i) for i in range(10)])
+        d = MockGroup([MockItem(i) for i in range(10)])
+        self.assertNotEqual(a, b)
+        self.assertEqual(c, d)
+        # group can't equal item because item will never equal group.
+        item = MockItem(1)
+        group = MockGroup([MockItem(1)])
+        self.assertEqual(group, item)
 
     def test_address(self):
         """ Address. """

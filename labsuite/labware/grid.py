@@ -388,6 +388,8 @@ class ItemGroup():
     _elements = None  # Array of all the elements in the group.
 
     def __init__(self, elements):
+        if len(elements) == 0:
+            raise ValueError("Item group can't be empty.")
         self._elements = elements
 
     def __getattr__(self, name):
@@ -422,9 +424,6 @@ class ItemGroup():
             if sum(r is not None for r in out) == 0:  # All Nones = None
                 return None
             return out
-
-    def __getitem__(self, i):
-        return self._elements[i]
 
     def _assert_compatible_lengths(self, args, kwargs):
         """
@@ -485,5 +484,15 @@ class ItemGroup():
         """
         return self.__class__(self._elements + b._elements)
 
+    def __getitem__(self, i):
+        return self._elements[i]
+
     def __len__(self):
         return len(self._elements)
+
+    def __eq__(self, b):
+        if b == self._elements[0]:
+            return True
+        if isinstance(b, self.__class__):
+            return self._elements == b._elements
+        return False
