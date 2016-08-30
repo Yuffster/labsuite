@@ -1,6 +1,7 @@
 from labsuite.labware.grid import GridContainer, humanize_position
 from labsuite.labware.containers import load_container
 from labsuite.util import exceptions as x
+from labsuite.util.filters import find_objects
 
 
 class Deck(GridContainer):
@@ -30,14 +31,7 @@ class Deck(GridContainer):
             )
 
     def find_module(self, **filters):
-        for pos, mod in sorted(self._children.items()):
-            match = True
-            for k, v in filters.items():
-                if getattr(mod, k, None) != filters[k]:
-                    match = False
-                    break
-            if match:
-                return mod
+        return find_objects(self._children, limit=1, **filters)
 
     def slot(self, position):
         pos = self._normalize_position(position)
