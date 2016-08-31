@@ -124,7 +124,9 @@ class ContextHandler(ProtocolHandler):
         return self._calibration[axis]
 
     def calibrate(self, pos, axis=None, x=None, y=None, z=None, top=None,
-                  bottom=None):
+                  bottom=None, tool=None):
+        if tool:
+            axis = tool.axis
         if axis is None:
             instrument = self.get_only_instrument()
             if instrument is None:
@@ -174,7 +176,8 @@ class ContextHandler(ProtocolHandler):
         slot, well = position
         if slot not in cal:
             raise ex.CalibrationMissing(
-                "No calibration for {}".format(humanize_position(slot))
+                "No calibration for {} (axis {}).".
+                format(humanize_position(slot), axis)
             )
         defaults = ({'top': 0, 'bottom': 0, 'x': 0, 'y': 0})
         output = {}
@@ -228,11 +231,11 @@ class ContextHandler(ProtocolHandler):
             )
         return self.get_coordinates(tip.address, axis=pipette.axis)
 
-    def get_trash_coordinates(self, axis=None):
+    def get_trash_coordinates(self, tool):
         trash = self.find_container(name='point.trash')
         if trash is None:
             raise ex.ContainerMissing("No disposal point (trash) on deck.")
-        return self.get_coordinates(trash.address + [(0, 0)], tool=axis)
+        return self.get_coordinates(trash.address + [(0, 0)], tool=tool)
 
     def get_volume(self, well):
         slot, well = self._protocol._normalize_address(well)
