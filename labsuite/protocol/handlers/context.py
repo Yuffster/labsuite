@@ -14,23 +14,29 @@ class ContextHandler(ProtocolHandler):
     _deck = None
     _instruments = None  # Axis as keys; Pipette object as vals.
 
-    # Calibration is organized by axis.
-    #
-    # {
-    #   'a': {'_axis': {top, bottom, blowout}, (0,0): {x, y, top, bottom}}
-    # }
-    _calibration = None
-
     def setup(self):
         self._deck = deck.Deck()
         self._instruments = {}
-        self._calibration = {}
+
+    @property
+    def _calibration(self):
+        """
+        We're always reinitializing this object, but calibration needs to
+        remain the same.  So we go up a level and grab it from the parent
+        Protocol.
+        """
+        return self._protocol._calibration
 
     def add_instrument(self, axis, name):
         axis = axis.upper()
         # We only have pipettes now so this is pipette-specific.
         self._instruments[axis] = pipettes.load_instrument(name)
-        self._instruments[axis]._axis = axis
+        self._instruments[axis].set_context(self)
+
+    def get_axis(self, instrument):
+        for k in self._instruments:
+            if instrument is self._instruments[k]:
+                return k
 
     def get_instrument(self, axis=None, name=None, **kwargs):
         if axis is not None:

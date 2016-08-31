@@ -21,9 +21,9 @@ class Pipette():
 
     _name = None  # Labware name used to load this object.
 
-    _top = None  # Top of the plunger.
-    _blowout = None  # Bottom of the plunger (all liquid expelled).
-    _droptip = None  # Point where the screw on the axis hits the droptip.
+    _context = None
+
+    __calibration = None  # {} Only gets used when no context is available.
 
     _axis = None
 
@@ -33,6 +33,9 @@ class Pipette():
     ]
 
     _tip_plunge = 6  # Distance from calibrated top of tiprack to pickup tip.
+
+    def __init__(self):
+        self.__calibration = {}
 
     def calibrate(self, top=None, blowout=None, droptip=None, axis='A'):
         """Set calibration values for the pipette plunger.
@@ -53,19 +56,28 @@ class Pipette():
             This position that causes the tip to be released from the
             pipette.
 
-        axis : char
-            A letter representing the axis of the motor control driver
-            connected to this pipette.
-
         """
         if top is not None:
-            self._top = top
+            self._calibration['top'] = top
         if blowout is not None:
-            self._blowout = blowout
+            self._calibration['blowout'] = blowout
         if droptip is not None:
-            self._droptip = droptip
-        if axis:
-            self._axis = axis
+            self._calibration['droptip'] = droptip
+
+    @property
+    def _calibration(self):
+        if self._context:
+            return self._context._calibration
+        else:
+            return self.__calibration
+
+    def set_context(self, context):
+        """
+        Sets the operational context (ContextHandler) so that we can access
+        operational data, such as which head axis this instrument is attached
+        to.
+        """
+        self._context = context
 
     def plunge_depth(self, volume):
         """Calculate axis position for a given liquid volume.
@@ -76,14 +88,14 @@ class Pipette():
         Calibration of the top and blowout positions are necessary for
         these calculations to work.
         """
-        if self._blowout is None or self._top is None:
+        if self.blowout is None or self.top is None:
             raise x.CalibrationMissing(
                 "Pipette {} not calibrated.".format(self.axis)
             )
         percent = self._volume_percentage(volume)
-        travel = self._blowout - self._top
+        travel = self.blowout - self.top
         distance = travel * percent
-        return self._top + distance
+        return self.top + distance
 
     def _volume_percentage(self, volume):
         """Returns the plunger percentage for a given volume.
@@ -135,15 +147,21 @@ class Pipette():
 
     @property
     def axis(self):
-        return self._axis
+        if self._context:
+            return self._context.get_axis(self)
+        return None
+
+    @property
+    def top(self):
+        return self._calibration['top']
 
     @property
     def blowout(self):
-        return self._blowout
+        return self._calibration['blowout']
 
     @property
     def droptip(self):
-        return self._droptip
+        return self._calibration['droptip']
 
     @property
     def name(self):

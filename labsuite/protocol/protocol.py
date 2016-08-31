@@ -16,7 +16,8 @@ class Protocol():
 
     # Operational data.
     _ingredients = None  # { 'name': "A1:A1" }
-    _instruments = None  # { motor_axis: instrument }
+    _head = None  # Head layout. { motor_axis: instrument name }
+    _calibration = None  # Axis and instrument calibration.
     _container_labels = None  # Aliases. { 'foo': (0,0), 'bar': (0,1) }
     _label_case = None  # Capitalized labels.
     _containers = None  # { slot: container_name }
@@ -43,7 +44,8 @@ class Protocol():
         self._ingredients = {}
         self._container_labels = {}
         self._label_case = {}
-        self._instruments = {}
+        self._head = {}
+        self._calibration = {}
         self._containers = {}
         self._commands = []
         self._handlers = []
@@ -93,7 +95,7 @@ class Protocol():
 
     @property
     def instruments(self):
-        return copy.deepcopy(self._instruments)
+        return copy.deepcopy(self._head)
 
     @property
     def version(self):
@@ -126,7 +128,7 @@ class Protocol():
     def hash(self):
         return hashing.hash_data([
             self._ingredients,
-            self._instruments,
+            self._head,
             self._container_labels,
             self._label_case,
             self._containers,
@@ -190,9 +192,9 @@ class Protocol():
         for label, case in b._label_case.items():
             self._label_case[label] = case
         # Add the instruments from second.
-        for axis, name in b._instruments.items():
-            if axis in self._instruments \
-               and self._instruments[axis] != name:
+        for axis, name in b._head.items():
+            if axis in self._head \
+               and self._head[axis] != name:
                 raise x.InstrumentConflict(
                     "Axis {} already allocated to {}".format(axis, name)
                 )
@@ -220,7 +222,7 @@ class Protocol():
         self._containers[slot] = name
 
     def add_instrument(self, axis, name):
-        self._instruments[axis] = name
+        self._head[axis] = name
         self._context_handler.add_instrument(axis, name)
 
     def calibrate(self, position, **kwargs):
@@ -492,26 +494,13 @@ class Protocol():
         """
         Initializes the context.
         """
-        if self._context_handler:
-            calibration = self._context_handler._calibration
-            instruments = self._context_handler._instruments
-        else:
-            calibration = None
-            instruments = None
-
         ch = ContextHandler(self)
         # Containers
         for slot, name in self._containers.items():
             ch.add_container(slot, name)
         # Instruments
-        for axis, name in self._instruments.items():
+        for axis, name in self._head.items():
             ch.add_instrument(axis, name)
-        # calibration
-        if calibration:
-            ch._calibration = calibration
-        # pipette calibration
-        if instruments:
-            ch._instruments = instruments
         return ch
 
     def _run_in_context_handler(self, command, **kwargs):
