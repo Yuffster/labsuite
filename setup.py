@@ -10,7 +10,6 @@ config = {
     'package_data': {
         "labsuite": [
             "config/containers/**/*.yml",
-            "config/containers/legacy_containers.json",
             "compilers/data/*"
         ]
     },

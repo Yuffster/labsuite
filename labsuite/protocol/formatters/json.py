@@ -40,7 +40,7 @@ class JSONFormatter(ProtocolFormatter):
 
         instructions = []
         for command in self._protocol.commands:
-            command = self._translate_command(command)
+            command = self._export_command(command)
             instructions.append(command)
 
         out = OrderedDict()
@@ -50,17 +50,17 @@ class JSONFormatter(ProtocolFormatter):
         out['instructions'] = instructions
         return json.dumps(out, indent=4)
 
-    def _translate_command(self, command):
+    def _export_command(self, command):
         command = copy.deepcopy(command)
         name = command['command']
-        method = getattr(self, "_translate_{}_command".format(name), None)
-        d = self._translate_any_command(command)
+        method = getattr(self, "_export_{}_command".format(name), None)
+        d = self._export_any_command(command)
         if method:
             return method(d)
         else:
             return d
 
-    def _translate_any_command(self, command):
+    def _export_any_command(self, command):
         if 'start' in command:
             s = self._protocol.humanize_address(command['start'])
             command['start'] = s
@@ -79,11 +79,11 @@ class JSONFormatter(ProtocolFormatter):
         if transfers:
             ts = []
             for t in transfers:
-                ts.append(self._translate_any_command(t))
+                ts.append(self._export_any_command(t))
             d['transfers'] = ts
         return d
 
-    def _translate_mix_command(self, command):
+    def _export_mix_command(self, command):
         command['repetitions'] = command.pop('reps')
         return command
 
