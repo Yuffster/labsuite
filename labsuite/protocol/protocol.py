@@ -10,7 +10,7 @@ from labsuite.util import ExceptionProxy
 import time
 import copy
 import logging
-
+import inspect
 
 class Protocol():
 
@@ -538,25 +538,34 @@ class Protocol():
         Runs protocol on a virtualized MotorHandler to ensure that there are
         no run-specific problems.
         """
-        # Detach the motor handler and disable the logger.
+        old_motor = self._motor_handler
+        if old_motor:
+            self._handlers.remove(old_motor)
+        new_motor = self.attach_motor()
+        self._handler_runthrough(new_motor)
+        if old_motor:
+            self._motor_handler = old_motor
+        logger.disabled = False
+
+    def _handler_runthrough(self, handler):
+        """
+        Runs protocol on a virtualized handler.
+        """
+        # Disable logger.
         logger = logging.getLogger()
         logger.disabled = True
-        oh = self._motor_handler
-        if oh:
-            self._handlers.remove(oh)
+        # Disable the other handlers.
+        old_handlers = self._handlers
+        self._handlers = []
         try:
-            nh = self.attach_motor()
+            self.attach_handler(handler)
             self.run_all()
         finally:
             # Put everything back the way it was.
-            self._motor_handler = oh
-            if oh:
-                self._handlers.append(oh)
-            if nh:
-                self._handlers.remove(nh)
             logger.disabled = False
+            self._handlers = old_handlers
 
-    def attach_handler(self, handler_class):
+    def attach_handler(self, handler):
         """
         When you attach a handler, commands are run on the handler in sequence
         when Protocol.run_next() is called.
@@ -569,12 +578,10 @@ class Protocol():
         you pass in, or you'll get exceptions. Just make sure you subclass
         from ProtocolHandler and you'll be fine; empty methods are stubbed
         out for all supported commands.
-
-        Pass in the class, not an instance. This method returns the
-        instantiated object, which you can use to do any additional setup
-        required for the particular Handler.
         """
-        handler = handler_class(self, self._context_handler)
+        if inspect.isclass(handler):
+            handler = handler(self)
+        handler.set_context(self._context_handler)
         self._handlers.append(handler)
         return handler
 
