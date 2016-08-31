@@ -157,15 +157,15 @@ class Pipette():
 
     @property
     def top(self):
-        return self._calibration['top']
+        return self._calibration.get('top', None)
 
     @property
     def blowout_depth(self):
-        return self._calibration['blowout']
+        return self._calibration.get('blowout', None)
 
     @property
     def droptip_depth(self):
-        return self._calibration['droptip']
+        return self._calibration.get('droptip', None)
 
     @property
     def name(self):

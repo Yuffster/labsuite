@@ -197,7 +197,10 @@ class LiquidInventory():
         # all the liquids mixed into this well.
         liq = self._contents
         for l in liq:
-            proportion = liq[l] / total_volume
+            if liq[l] != 0:
+                proportion = liq[l] / total_volume
+            else:
+                proportion = 0
             value = proportion * amount
             self._contents[l] = self._contents[l] - value
             destination.add_named_liquid(value, l)
