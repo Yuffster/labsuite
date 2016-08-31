@@ -31,4 +31,7 @@ def find_objects(collection, limit=None, **kwargs):
                 if limit == 1:
                     return results[0]  # For convenience.
                 return results
-    return results
+    if len(results) == 0:
+        return None
+    else:
+        return results
