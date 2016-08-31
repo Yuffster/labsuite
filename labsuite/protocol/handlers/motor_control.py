@@ -34,16 +34,16 @@ class MotorControlHandler(ProtocolHandler):
 
     def transfer(self, start=None, end=None, volume=None, tool=None, **kwargs):
         tool = self.get_pipette(name=tool, has_volume=volume)
-        self.pickup_tip(tool)
+        tool.pickup_tip()
         self.move_volume(tool, start, end, volume)
-        self.dispose_tip(tool)
+        tool.dispose_tip()
 
     def transfer_group(self, transfers=None, tool=None, volume=None, **kwargs):
         tool = self.get_pipette(name=tool, has_volume=volume)
-        self.pickup_tip(tool)
+        tool.pickup_tip()
         for t in transfers:
             self.move_volume(tool, t['start'], t['end'], t['volume'])
-        self.dispose_tip(tool)
+        tool.dispose_tip()
 
     def distribute(self, start=None, transfers=None, tool=None, **kwargs):
         for t in transfers:
@@ -61,50 +61,24 @@ class MotorControlHandler(ProtocolHandler):
 
     def mix(self, start=None, reps=None, tool=None, volume=None, **kwargs):
         tool = self.get_pipette(name=tool, has_volume=volume)
-        self.pickup_tip(tool)
+        tool.pickup_tip()
         for i in range(reps):
             self.move_volume(tool, start, start, volume)
-        self.dispose_tip(tool)
+        tool.dispose_tip()
 
-    def move_volume(self, pipette, start, end, volume):
-        self.move_to_well(start)
-        pipette.plunge(volume)
-        self.move_into_well(start)
-        pipette.reset()
-        self.move_to_well(end)
-        self.move_into_well(end)
-        pipette.blowout()
-        self.move_up()
-        pipette.reset()
+    def move_volume(self, tool, start, end, volume):
+        tool.move_to_well(start)
+        tool.plunge(volume)
+        tool.move_into_well(start)
+        tool.reset()
+        tool.move_to_well(end)
+        tool.move_into_well(end)
+        tool.blowout()
+        tool.move_up()
+        tool.reset()
 
-    def pickup_tip(self, pipette):
-        coords = self._context.get_next_tip_coordinates(pipette)
-        self.move_motors(x=coords['x'], y=coords['y'])
-        self.move_motors(z=coords['top'])
-
-    def dispose_tip(self, pipette):
-        coords = self._context.get_trash_coordinates(pipette.axis)
-        self.move_motors(x=coords['x'], y=coords['y'])
-        self.move_motors(z=coords['top'])
-        pipette.droptip()
-        pipette.reset()
-
-    def move_to_well(self, well):
-        self.move_motors(z=0)  # Move up so we don't hit things.
-        coords = self._context.get_coordinates(well)
-        self.move_motors(x=coords['x'], y=coords['y'])
-        self.move_motors(z=coords['top'])
-
-    def move_into_well(self, well):
-        coords = self._context.get_coordinates(well)
-        self.move_motors(x=coords['x'], y=coords['y'])
-        self.move_motors(z=coords['bottom'])
-
-    def move_up(self):
-        self.move_motors(z=0)
-
-    def depress_plunger(self, pipette, volume):
-        pipette.plunge(volume)
+    def depress_plunger(self, tool, volume):
+        tool.plunge(volume)
 
     def get_pipette(self, **kwargs):
         """
@@ -128,44 +102,74 @@ class MotorControlHandler(ProtocolHandler):
 
 class PipetteMotor():
 
-        def __init__(self, pipette, motor):
-            self.pipette = pipette
-            self.motor = motor
+    def __init__(self, pipette, motor):
+        self.pipette = pipette
+        self.motor = motor
+        self.context = self.motor._context
 
-        def reset(self):
-            debug(
-                "PipetteMotor",
-                "Resetting {} axis ({}).".format(self.axis, self.name)
-            )
-            self.move(0)
+    def reset(self):
+        debug(
+            "PipetteMotor",
+            "Resetting {} axis ({}).".format(self.axis, self.name)
+        )
+        self.move_axis(0)
 
-        def plunge(self, volume):
-            debug(
-                "PipetteMotor",
-                "Plunging {} axis ({}) to volume of {}µl."
-                .format(self.axis, self.name, volume)
-            )
-            depth = self.pipette.plunge_depth(volume)
-            self.move(depth)
+    def plunge(self, volume):
+        debug(
+            "PipetteMotor",
+            "Plunging {} axis ({}) to volume of {}µl."
+            .format(self.axis, self.name, volume)
+        )
+        depth = self.pipette.plunge_depth(volume)
+        self.move_axis(depth)
 
-        def blowout(self):
-            debug(
-                "PipetteMotor",
-                "Blowout on {} axis ({}).".format(self.axis, self.name)
-            )
-            self.move(self.pipette.blowout)
+    def blowout(self):
+        debug(
+            "PipetteMotor",
+            "Blowout on {} axis ({}).".format(self.axis, self.name)
+        )
+        self.move_axis(self.pipette.blowout_depth)
 
-        def droptip(self):
-            debug(
-                "PipetteMotor",
-                "Droptip on {} axis ({}).".format(self.axis, self.name)
-            )
-            self.move(self.pipette.droptip)
+    def droptip(self):
+        debug(
+            "PipetteMotor",
+            "Droptip on {} axis ({}).".format(self.axis, self.name)
+        )
+        self.move_axis(self.droptip_depth)
 
-        def move(self, position):
-            axis = self.axis
-            self.motor.move_motors(**{axis: position})
+    def pickup_tip(self):
+        coords = self.context.get_next_tip_coordinates(self)
+        self.move(x=coords['x'], y=coords['y'])
+        self.move(z=coords['top'])
 
-        def __getattr__(self, name):
-            """ Fallback to Pipette for everything else. """
-            return getattr(self.pipette, name)
+    def dispose_tip(self):
+        coords = self.context.get_trash_coordinates(self)
+        self.move(x=coords['x'], y=coords['y'])
+        self.move(z=coords['top'])
+        self.droptip()
+        self.reset()
+
+    def move_to_well(self, well):
+        self.move(z=0)  # Move up so we don't hit things.
+        coords = self.context.get_coordinates(well, tool=self)
+        self.move(x=coords['x'], y=coords['y'])
+        self.move(z=coords['top'])
+
+    def move_into_well(self, well):
+        coords = self.context.get_coordinates(well, tool=self)
+        self.move(x=coords['x'], y=coords['y'])
+        self.move(z=coords['bottom'])
+
+    def move_up(self):
+        self.move(z=0)
+
+    def move(self, **coords):
+        self.motor.move_motors(**coords)
+
+    def move_axis(self, depth):
+        axis = self.axis
+        self.move(**{axis: depth})
+
+    def __getattr__(self, name):
+        """ Fallback to Pipette for everything else. """
+        return getattr(self.pipette, name)

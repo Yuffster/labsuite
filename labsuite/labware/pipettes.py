@@ -89,12 +89,12 @@ class Pipette():
         Calibration of the top and blowout positions are necessary for
         these calculations to work.
         """
-        if self.blowout is None or self.top is None:
+        if self.blowout_depth is None or self.top is None:
             raise x.CalibrationMissing(
                 "Pipette {} not calibrated.".format(self.axis)
             )
         percent = self._volume_percentage(volume)
-        travel = self.blowout - self.top
+        travel = self.blowout_depth - self.top
         distance = travel * percent
         return self.top + distance
 
@@ -157,11 +157,11 @@ class Pipette():
         return self._calibration['top']
 
     @property
-    def blowout(self):
+    def blowout_depth(self):
         return self._calibration['blowout']
 
     @property
-    def droptip(self):
+    def droptip_depth(self):
         return self._calibration['droptip']
 
     @property

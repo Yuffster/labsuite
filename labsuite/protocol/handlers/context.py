@@ -166,8 +166,10 @@ class ContextHandler(ProtocolHandler):
             a_cal['bottom'] = bottom
         self.get_instrument(axis=axis).calibrate(**a_cal)
 
-    def get_coordinates(self, position, axis=None):
+    def get_coordinates(self, position, axis=None, tool=None):
         """ Returns the calibrated coordinates for a position. """
+        if tool is not None:
+            axis = tool.axis
         cal = self.get_axis_calibration(axis)
         slot, well = position
         if slot not in cal:
@@ -230,7 +232,7 @@ class ContextHandler(ProtocolHandler):
         trash = self.find_container(name='point.trash')
         if trash is None:
             raise ex.ContainerMissing("No disposal point (trash) on deck.")
-        return self.get_coordinates(trash.address + [(0, 0)], axis)
+        return self.get_coordinates(trash.address + [(0, 0)], tool=axis)
 
     def get_volume(self, well):
         slot, well = self._protocol._normalize_address(well)
