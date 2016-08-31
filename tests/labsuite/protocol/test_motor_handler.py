@@ -75,6 +75,12 @@ class MotorHandlerTest(unittest.TestCase):
         self.assertEqual(expected, output_log.movements)
         self.assertEqual([(0, 2), (1, 2), (2, 2)], prog_out)
 
+    def test_calibrate_without_axis(self):
+        self.protocol.add_instrument('A', 'p20')
+        self.protocol.add_instrument('B', 'p200')
+        with self.assertRaises(x.DataMissing):
+            self.protocol.calibrate('A1', top=0, bottom=0)
+
     def test_transfer_without_tiprack(self):
         """ Raise error when no tiprack found. """
         self.protocol.attach_motor()

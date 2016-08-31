@@ -110,7 +110,9 @@ class ContextHandler(ProtocolHandler):
         Initializes and returns calibration for a particular axis.
         """
         if axis is None:
-            axis = self.get_only_instrument().axis
+            instrument = self.get_only_instrument()
+            if instrument:
+                axis = instrument.axis
         if axis is None:
             raise ex.CalibrationMissing(
                 "Calibration axis must be specified when multiple " +
