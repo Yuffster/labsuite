@@ -42,7 +42,7 @@ class ContextHandler(ProtocolHandler):
         if axis is not None:
             axis = self.normalize_axis(axis)
             if axis not in self._instruments:
-                raise x.InstrumentMissing(
+                raise ex.InstrumentMissing(
                     "No instrument assigned to {} axis.".format(axis)
                 )
             else:
@@ -85,7 +85,7 @@ class ContextHandler(ProtocolHandler):
         if len(ks) is 1:
             return self.get_instrument(axis=ks[0])
         if len(ks) is 0:
-            raise x.InstrumentMissing("No instruments loaded.")
+            raise ex.InstrumentMissing("No instruments loaded.")
         else:
             return None
 
@@ -97,10 +97,10 @@ class ContextHandler(ProtocolHandler):
         attached to the protocol.
         """
         if axis is None:
-            raise x.DataMissing("Axis must be specified.")
+            raise ex.DataMissing("Axis must be specified.")
         axis = axis.upper()
         if axis not in self._instruments:
-            raise x.InstrumentMissing(
+            raise ex.InstrumentMissing(
                 "Can't find instrument for axis {}.".format(axis)
             )
         return axis
@@ -112,7 +112,7 @@ class ContextHandler(ProtocolHandler):
         if axis is None:
             axis = self.get_only_instrument().axis
         if axis is None:
-            raise x.CalibrationMissing(
+            raise ex.CalibrationMissing(
                 "Calibration axis must be specified when multiple " +
                 "instruments are loaded."
             )
@@ -169,7 +169,7 @@ class ContextHandler(ProtocolHandler):
         cal = self.get_axis_calibration(axis)
         slot, well = position
         if slot not in cal:
-            raise x.CalibrationMissing(
+            raise ex.CalibrationMissing(
                 "No calibration for {}".format(humanize_position(slot))
             )
         defaults = ({'top': 0, 'bottom': 0, 'x': 0, 'y': 0})
@@ -203,7 +203,7 @@ class ContextHandler(ProtocolHandler):
         # We won't necessarily use this rack, but we need its properties.
         xrack = self.find_container(name=name)
         if xrack is None:
-            raise x.ContainerMissing("No tiprack found for {}.".format(name))
+            raise ex.ContainerMissing("No tiprack found for {}.".format(name))
         # Multichannel support.
         if pipette.channels == xrack.cols:
             tiprack = self.find_container(name=name, has_row=True)
@@ -218,7 +218,7 @@ class ContextHandler(ProtocolHandler):
             if tiprack:
                 tip = tiprack.get_next_tip()
         if tiprack is None:
-            raise x.TipMissing(
+            raise ex.TipMissing(
                 "No tiprack found with enough tips for {}-channel {}."
                 .format(pipette.channels, pipette.size)
             )
@@ -227,7 +227,7 @@ class ContextHandler(ProtocolHandler):
     def get_trash_coordinates(self, axis=None):
         trash = self.find_container(name='point.trash')
         if trash is None:
-            raise x.ContainerMissing("No disposal point (trash) on deck.")
+            raise ex.ContainerMissing("No disposal point (trash) on deck.")
         return self.get_coordinates(trash.address + [(0, 0)], axis)
 
     def get_volume(self, well):
