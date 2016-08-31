@@ -2,6 +2,7 @@ from labsuite.protocol.handlers import ProtocolHandler
 from labsuite.labware import deck, pipettes
 from labsuite.labware.grid import humanize_position
 from labsuite.util import exceptions as ex
+from labsuite.util.filters import find_objects
 
 
 class ContextHandler(ProtocolHandler):
@@ -41,38 +42,14 @@ class ContextHandler(ProtocolHandler):
     def get_instrument(self, axis=None, name=None, **kwargs):
         if axis is not None:
             axis = self.normalize_axis(axis)
-            if axis not in self._instruments:
-                raise ex.InstrumentMissing(
-                    "No instrument assigned to {} axis.".format(axis)
-                )
-            else:
-                inst = self._instruments[axis]
-                inst._axis = axis
-                if axis in self._calibration:
-                    if '_axis' in self._calibration[axis]:
-                        inst.calibrate(**self._calibration[axis]['_axis'])
-                return self._instruments[axis]
+            collection = [self._instruments[axis]]
+        else:
+            collection = self._instruments
+        # Sometimes people just pass this as None, in which case we want to
+        # skip it.
         if name is not None:
             kwargs['name'] = name
-        for k, i in sorted(self._instruments.items()):
-            match = True
-            for j, v in kwargs.items():
-                # If the property is a method, take the tuple arguments
-                # and pass that on, then except a boolean value of True.
-                # This lets us do things like supports_volume=(5, 10).
-                prop = getattr(i, j)
-                if getattr(prop, '__call__', None) is not None:
-                    if not isinstance(v, tuple):
-                        v = [v]
-                    if prop(*v) is not True:
-                        match = False
-                elif prop != v:
-                    match = False
-                    break
-            if match:
-                return self.get_instrument(axis=k)
-
-        return None
+        return find_objects(collection, limit=1, **kwargs)
 
     def find_container(self, **filters):
         return self._deck.find_module(**filters)
