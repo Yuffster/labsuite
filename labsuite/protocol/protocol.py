@@ -2,7 +2,7 @@ from labsuite.labware import containers, deck, pipettes
 from labsuite.labware.grid import normalize_position, humanize_position
 import labsuite.drivers.motor as motor_drivers
 from labsuite.util.log import debug
-from labsuite.protocol.handlers import ContextHandler, MotorControlHandler
+from labsuite.protocol.handlers import ContextHandler, MotorControlHandler, RequirementsHandler
 from labsuite.util import hashing
 from labsuite.util import exceptions as x
 from labsuite.util import ExceptionProxy
@@ -558,12 +558,13 @@ class Protocol():
         old_handlers = self._handlers
         self._handlers = []
         try:
-            self.attach_handler(handler)
+            handler = self.attach_handler(handler)
             self.run_all()
         finally:
             # Put everything back the way it was.
             logger.disabled = False
             self._handlers = old_handlers
+        return handler
 
     def attach_handler(self, handler):
         """
@@ -582,6 +583,7 @@ class Protocol():
         if inspect.isclass(handler):
             handler = handler(self)
         handler.set_context(self._context_handler)
+        handler.setup()
         self._handlers.append(handler)
         return handler
 
@@ -633,6 +635,11 @@ class Protocol():
         final construction.
         """
         return PartialProtocol(Protocol(*args, **kwargs), x.ProtocolException)
+
+    @property
+    def run_requirements(self):
+        req_handler = self._handler_runthrough(RequirementsHandler)
+        return req_handler.requirements
 
 
 class PartialProtocol(ExceptionProxy):

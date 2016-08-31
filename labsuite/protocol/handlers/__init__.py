@@ -1,3 +1,4 @@
 from labsuite.protocol.handlers.interface import ProtocolHandler
 from labsuite.protocol.handlers.context import ContextHandler
 from labsuite.protocol.handlers.motor_control import MotorControlHandler
+from labsuite.protocol.handlers.requirements import RequirementsHandler

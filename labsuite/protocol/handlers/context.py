@@ -147,6 +147,8 @@ class ContextHandler(ProtocolHandler):
 
     def get_coordinates(self, position, axis=None, tool=None):
         """ Returns the calibrated coordinates for a position. """
+        if len(position) == 1:
+            position = [position[0], (0, 0)]
         if tool is not None:
             axis = tool.axis
         cal = self.get_axis_calibration(axis)
@@ -179,15 +181,22 @@ class ContextHandler(ProtocolHandler):
             output['bottom'] = slot_cal['bottom']
         return output
 
+    def get_tiprack(self, pipette, **kwargs):
+        """ Returns a tiprack compatible with this pipette. """
+        name = 'tiprack.{}'.format(pipette.size.lower())
+        rack = self.find_container(name=name, **kwargs)
+        if rack is None:
+            raise ex.ContainerMissing("No tiprack found for {}.".format(name))
+        return rack
+
     def get_next_tip_coordinates(self, pipette):
         """
         Returns the next tip coordinates and decrements tip inventory.
         """
-        name = 'tiprack.{}'.format(pipette.size.lower())
-        # We won't necessarily use this rack, but we need its properties.
-        xrack = self.find_container(name=name)
-        if xrack is None:
-            raise ex.ContainerMissing("No tiprack found for {}.".format(name))
+        # Just grabbing the properties from this rack; we might use a
+        # different one.
+        xrack = self.get_tiprack(pipette)
+        name = xrack.name
         # Multichannel support.
         if pipette.channels == xrack.cols:
             tiprack = self.find_container(name=name, has_row=True)
