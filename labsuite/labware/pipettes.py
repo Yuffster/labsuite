@@ -27,15 +27,16 @@ class Pipette():
 
     _axis = None
 
-    _points = [
-        {'f1': 1, 'f2': 1},
-        {'f1': 2000, 'f2': 2000}
-    ]
+    _points = None  # {} (See init below.)
 
     _tip_plunge = 6  # Distance from calibrated top of tiprack to pickup tip.
 
     def __init__(self):
         self.__calibration = {}
+        self._points = [
+            {'f1': 1, 'f2': 1},
+            {'f1': 2000, 'f2': 2000}
+        ]
 
     def calibrate(self, top=None, blowout=None, droptip=None, axis='A'):
         """Set calibration values for the pipette plunger.
