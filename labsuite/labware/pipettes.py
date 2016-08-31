@@ -68,7 +68,10 @@ class Pipette():
     @property
     def _calibration(self):
         if self._context:
-            return self._context._calibration
+            cal = self._context._calibration[self.axis]
+            if '_instrument' not in cal:
+                cal['_instrument'] = {}
+            return cal['_instrument']
         else:
             return self.__calibration
 
