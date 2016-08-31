@@ -1,7 +1,7 @@
 from labsuite.protocol.handlers import ProtocolHandler
 from labsuite.labware import deck, pipettes
 from labsuite.labware.grid import humanize_position
-from labsuite.util import exceptions as x
+from labsuite.util import exceptions as ex
 
 
 class ContextHandler(ProtocolHandler):
@@ -126,7 +126,7 @@ class ContextHandler(ProtocolHandler):
         if axis is None:
             instrument = self.get_only_instrument()
             if instrument is None:
-                raise x.DataMissing(
+                raise ex.DataMissing(
                     "Calibration axis must be specified when multiple " +
                     "instruments are loaded."
                 )
