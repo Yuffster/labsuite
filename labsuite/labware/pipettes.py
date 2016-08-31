@@ -92,7 +92,7 @@ class Pipette():
         Calibration of the top and blowout positions are necessary for
         these calculations to work.
         """
-        if self.blowout_depth is None or self.top is None:
+        if self.is_calibrated is False:
             raise x.CalibrationMissing(
                 "Pipette {} not calibrated.".format(self.axis)
             )
@@ -170,6 +170,10 @@ class Pipette():
     @property
     def name(self):
         return self._name or self.size.lower()
+
+    @property
+    def is_calibrated(self):
+        return not (self.blowout_depth is None or self.top is None)
 
     def set_name(self, name):
         self._name = name
