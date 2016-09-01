@@ -22,13 +22,6 @@ class Microplate(GridContainer):
     def well(self, position):
         return self.get_child(position)
 
-    def calibrate(self, **kwargs):
-        """
-        Coordinates should represent the center and near-bottom of well
-        A1 with the pipette tip in place.
-        """
-        super(Microplate, self).calibrate(**kwargs)
-
 
 class Microplate_96(Microplate):
     pass
