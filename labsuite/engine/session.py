@@ -10,8 +10,6 @@ The virtual robot dispatches commands to the actual robot using low-level
 commands based on calculated absolute coordinates for movements.
 """
 
-from labsuite.engine import Context
-
 _sessions = {}
 
 
@@ -31,7 +29,6 @@ def close(sessionID):
 class Session():
 
     _sessionID = None
-    _context = None  # Operational context (virtual robot)
 
     def __init__(self, sessionID):
         """
@@ -43,7 +40,6 @@ class Session():
             raise KeyError("Session already exists: "+sessionID)
         _sessions[sessionID] = sessionID
         self._sessionID = sessionID
-        self._context = Context()
 
     def __enter__(self):
         return self
@@ -55,12 +51,18 @@ class Session():
     def sessionID(self):
         return self._sessionID
 
-    def execute(self, command, *args, **kwargs):
-        """
-        Executes and returns the response of a command.
-        """
-        return self._context.execute(command, *args, **kwargs)
-
     def close(self):
         """ Closes the session and deletes related session object. """
         del _sessions[self.sessionID]
+
+    def execute(self, method, *args, **kwargs):
+        """
+        Traverses through child components until it finds something that
+        has the same method name, then passes the arguments and returns
+        the response.
+        """
+        deck_method = getattr(self.deck, method, None)
+        if callable(deck_method):
+            return deck_method(*args, **kwargs)
+        else:
+            raise AttributeError("Command not found: " + method)
