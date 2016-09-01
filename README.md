@@ -69,11 +69,14 @@ p1.add_container("A1", "microplate.96")
 
 # No error, even though the container doesn't exist.
 p2 = Protocol.partial()
-p2.transfer('A1:A1', 'A1:A2')
-p2.transfer('A1:A1', 'A1:A3')
+p2.transfer('A1:A1', 'A1:A2', ul=10)
+p2.transfer('A1:A1', 'A1:A3', ul=10)
 
 # Combine the two Protocols into a third.
 p3 = (p1 + p2)
+
+# p1 remains unmodified.
+(p1 == (p1 + p2))  # False
 ```
 
 ### Protocol Combination
@@ -99,22 +102,36 @@ p1.add_instrument("p10")
 p1.add_container("A1", "microplate.96")
 
 p2 = Protocol.partial()
-p2.transfer('A1:A1', 'A1:A2')
-p2.transfer('A1:A1', 'A1:A3')
+p2.transfer('A1:A1', 'A1:A2', ul=10)
+p2.transfer('A1:A1', 'A1:A3', ul=10)
 
 p3 = Protocol()
 p3.add_instrument("p10")
 p3.add_container("A1", "microplate.96")
 p3 = Protocol.partial()
-p3.transfer('A1:A1', 'A1:A2')
-p3.transfer('A1:A1', 'A1:A3')
+p3.transfer('A1:A1', 'A1:A2', ul=10)
+p3.transfer('A1:A1', 'A1:A3', ul=10)
 
 (p3 == p1 + p2)  # True
 ```
 
-### Protocol Output
+### Running a Protocol
 
-Protocols can be output as JSON data structures.  Importing a previously
+Once you have a valid Protocol, you can run it by attaching it to the motor
+and calling the run generator.
+
+```python
+protocol.attach_motor('/dev/tty.usbmodem1421')
+for current, total in protocol.run():
+    print("Running command {} of {}".format(current, total))
+```
+
+If you don't care about the progress, the `run_all` method has been
+provided to automatically exhaust the run generator.
+
+### Exporting Protocols
+
+Protocols can be output as JSON data structures. Importing a previously
 saved JSON structure will load an exact replica of the exported Protocol.
 
 #### Input Python
@@ -210,6 +227,65 @@ protocol.export(JSONFormatter)
 }
 ```
 
+### Verifying Run Requirements
+
+`Protocol.run_requirements` will run through all the commands in the specified
+protocol to determine which containers need to be calibrated, how many tipracks
+need to be present, etc.
+
+The data is provided as a list of dictionaries, with the only guaranteed
+data element being `type`.
+
+If we define a protocol like so:
+
+```python
+protocol.add_instrument('A', 'p20')
+protocol.add_container('A1', 'microplate')
+protocol.add_container('A2', 'tiprack.p20')
+protocol.transfer('A1:A1', 'A1:A2', ul=10)
+```
+
+`protocol.run_requirements` will return:
+
+```python
+[
+    {'type': 'calibrate_instrument', 'axis': 'A', 'instrument_name': 'p20'},
+    {'type': 'calibrate_container', 'axis': 'A', 'address': (0, 0),
+     'container_name': 'microplate', 'instrument_name': 'p20'},
+    {'type': 'calibrate_container', 'axis': 'A', 'address': (0, 1),
+     'container_name': 'tiprack.p20', 'instrument_name': 'p20'}
+]
+```
+
+This can be used to generate a dynamic list, such as:
+
+> * Plunge depths on pipette A (p20) need to be calibrated.
+> * Container at A1 (microplate) needs to be calibrated for the A (p20) axis.
+> * Container at A2 (tipracks.p20) needs to be calibrated for the A (p20) axis.
+
+If you provide one of these elements, `run_requirements` will return the updated
+list.
+
+```python
+protocol.calibrate('A1', x=100, y=100, top=20, bottom=50, axis='A')
+```
+
+```python
+[
+    {'type': 'calibrate_instrument', 'axis': 'A', 'instrument_name': 'p20'},
+    {'type': 'calibrate_container', 'axis': 'A', 'address': (0, 0),
+     'container_name': 'microplate', 'instrument_name': 'p20'},
+    {'type': 'calibrate_container', 'axis': 'A', 'address': (0, 1),
+     'container_name': 'tiprack.p20', 'instrument_name': 'p20'}
+]
+```
+
+> * Plunge depths on pipette A (p20) need to be calibrated.
+> * Container at A2 (tipracks.p20) needs to be calibrated for the A (p20) axis.
+
+Additional requirements checks should be added to anticipate every possible
+Motor Handler exception.
+
 ### Running on the Robot
 
 To run a protocol on a CNC machine, provide calibration data and then
@@ -218,12 +294,14 @@ attach the Protocol class to the serial port connected to the robot.
 `Protocol.run` is a generator that will yield the current progress and total
 number of commands within the protocol upon completion of each command.
 
-To know when each command has been completed by the robot, it sends a special
-debug command (`M62`) to the OpenTrons custom firmware and reads from the serial
-device until the line `{"stat":0}` is found.
+```python
+protocol.attach_motor('/dev/tty.usbmodem1421')
+for current, total in protocol.run():
+    print("Running command {} of {}".format(current, total))
+```
 
-This functionaly is OpenTrons specific, but can be easily modified for other
-systems.
+If you don't care about the progress, the `run_all` method has been
+provided to automatically exhaust the run generator.
 
 ```python
 # Calibrate containers relative to the only instrument.
@@ -283,7 +361,25 @@ Additionally, the MotorHandler includes a PipetteMotor class which wraps
 and tries to mimic the interface of a standard Pipette instance from the
 labware portion of the codebase.
 
-### Creating Additional Handlers
+##### Motor Control Quirks
+
+To know when each command has been completed by the robot, the Motor Driver sends
+a special debug command (`M62`) to the OpenTrons custom firmware and reads from
+the serial device until the line `{"stat":0}` is found.
+
+This functionaly is OpenTrons specific, but can be easily modified for other
+systems.
+
+(**Note**: This is obsolete behavior which needs to be updated by someone
+with access to the robot.)
+
+#### Requirements Handler
+
+The Requirements Handler will do a quick run-through of all the commands in
+a protocol and log any issues which would cause the Motor Handler to fail,
+such as missing calibration or insufficient tiprack tips.
+
+#### Creating Additional Handlers
 
 Additional handlers can be created by extending from ProtocolHandler. Once
 you've created a new protocol handler, you can attach it using Protocol's
