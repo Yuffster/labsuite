@@ -75,6 +75,10 @@ class PFUSXTest(unittest.TestCase):
         expected = ['ATA', 'CCR', 'TCT', 'TAT', 'TT']
         self.assertEqual(result, expected)
 
+    def test_invalid_tal_sequence(self):
+        with self.assertRaises(ValueError):
+            pfusx.tal_to_codons('HELLO :)')
+
     def test_tal_sequence_sixteen(self):
         """
         Segment 16-character TAL sequence.
@@ -97,6 +101,11 @@ class PFUSXTest(unittest.TestCase):
             'receiver': 'B12'
         }
         self.assertEqual(result, expected)
+
+    def test_large_well_sequence(self):
+        target = 'NI NG NI HD HD NN NG HD NG HD NI NG NI NG NG NG NG NG'
+        with self.assertRaises(ValueError):
+            pfusx.get_plasmid_wells(target)
 
     def test_tal_transfers(self):
         """

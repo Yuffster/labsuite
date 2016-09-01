@@ -99,6 +99,9 @@ def generate_expression(syntax):
 
 
 def execute(command_string):
+    args = command_string.split(' ')
+    if len(args) == 0:
+        args[1] = ""
     command, args = command_string.split(' ', 1)
     handler = _command_list.get(command)
     if not handler:

@@ -148,3 +148,21 @@ class TiprackTest(unittest.TestCase):
         self.assertEqual(col2, [(1, i) for i in range(12)])
         col3 = self.rack.get_clean_col().position
         self.assertEqual(col3, [(2, i) for i in range(12)])
+
+    def test_no_clean_col(self):
+        for _ in range(self.rack.cols):
+            self.rack.get_next_col()
+        with self.assertRaises(x.TipMissing):
+            self.rack.get_next_col()
+
+    def test_no_clean_row(self):
+        for _ in range(self.rack.rows):
+            self.rack.get_next_row()
+        with self.assertRaises(x.TipMissing):
+            self.rack.get_next_row()
+
+    def test_no_clean_tip(self):
+        for _ in range(self.rack.rows):
+            self.rack.get_next_row()
+        with self.assertRaises(x.TipMissing):
+            self.rack.get_next_tip()

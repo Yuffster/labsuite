@@ -77,9 +77,6 @@ class MotorControlHandler(ProtocolHandler):
         tool.move_up()
         tool.reset()
 
-    def depress_plunger(self, tool, volume):
-        tool.plunge(volume)
-
     def get_pipette(self, **kwargs):
         """
         Returns a closure object that allows for the plunge, release, and

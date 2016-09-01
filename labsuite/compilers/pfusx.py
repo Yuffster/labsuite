@@ -98,7 +98,7 @@ def tal_to_codons(tal):
     Takes a 15 or 16-base ATGC sequence and outputs an array of five
     codon sequences after doing validation.
     """
-    if re.match(r'[^ACTG]]', tal):  # Content check.
+    if re.match(r'[^ACTG]', tal):  # Content check.
         raise ValueError("FusX TALEN sequence must be in ACTG form.")
     codons = []
     for n in range(0, 12, 3):  # Chunk into four parts of 3.
@@ -122,7 +122,7 @@ def get_plasmid_wells(sequence, receiver='pC'):
     codons = tal_to_codons(tal[0:-1])
     pLR_bp = tal[-1]  # Last base is the receiver.
 
-    if len(codons) != 5:
+    if len(codons[4]) > 4:
         raise ValueError("Sequence must be an array of five codons.")
 
     # We only actually need well coordinates for these because the plate

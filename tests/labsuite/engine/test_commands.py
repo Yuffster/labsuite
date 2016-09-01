@@ -43,3 +43,17 @@ class CommandTest(unittest.TestCase):
         parsed = execute('move_volume 100ul to D3:A1')
         expected = 'Move volume of 100ul to D3:A1.'
         self.assertEqual(expected, parsed)
+
+    def test_invalid_tags(self):
+        with self.assertRaises(KeyError):
+            @syntax('<foo>')
+            def move_volume(volume=None, plate=None):
+                pass
+
+    def test_unknown_command(self):
+        with self.assertRaises(KeyError):
+            execute("foo bar")
+
+    def test_single_word_command(self):
+        with self.assertRaises(ValueError):
+            execute("foo")
