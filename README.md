@@ -1,6 +1,6 @@
 # LabSuite
 
-[![Build Status](https://travis-ci.org/Yuffster/labsuite.svg?branch=master)](https://travis-ci.org/Yuffster/labsuite)
+ [![Build Status](https://travis-ci.org/Yuffster/labsuite.svg?branch=master)](https://travis-ci.org/Yuffster/labsuite)
 
 This biotech robotics platform takes high-level protocols and translates them
 into low-level machine instructions for a motor controller over a serial
