@@ -6,9 +6,9 @@ This biotech robotics platform takes high-level protocols and translates them
 into low-level machine instructions for a motor controller over a serial
 connection to perform those actions on a liquid handling robot.
 
-I made this when I was at [OpenTrons](http://opentrons.com), so it works well
-with the OT-One machine.  You can find the official repository and all related
-updates [here](http://github.com/Opentrons/opentrons_sdk).
+This is a fork of the [OpenTrons API](http://github.com/Opentrons/opentrons-api) at commit [4d04d9dd8f53a58 or so](https://github.com/OpenTrons/opentrons-api/commit/4d04d9dd8f53a580bfe6b9c0d1a61f812b296b44), which is under Apache License.  This code is not Apache license, and this fork of the software is licensed for noncommercial use only.  For additional permissions, please contact me.
+
+The OpenTrons team went with a new SmoothieBoard communication protocol sice the fork, so this project does not work with new OpenTrons machines.  Might work for older models, however.
 
 This current version has basic support for keeping track of liquids (and 
 mixtures of liquids) between liquid containers.
